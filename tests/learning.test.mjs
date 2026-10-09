@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildPack,generateMvp} from '../public/engine.js';
+import {lessons,sampleFiles,matchLesson,diagnose,repairPrompt} from '../public/learning-data.js';
+test('agent handoff includes latest edited brief and verification instructions',()=>{const p={answers:['Coach app','Book in three minutes','Customers and coaches','No payments','Browse; Book'],output:'My edited requirements: use email sign-in'};const text=buildPack(p);assert.ok(text.includes(p.output));assert.ok(text.includes('ARCHITECTURE.md'));assert.ok(text.includes('Tests and their results'));assert.ok(!text.includes('undefined'));});
+test('MVP draft preserves all five user answers',()=>{const p={answers:['Coach app','Book in three minutes','Customers and coaches','No payments','Browse; Book']};const text=generateMvp(p);for(const answer of p.answers)assert.ok(text.includes(answer));});
+test('every lesson links to actual fixture source and has a valid answer',()=>{for(const l of lessons){assert.ok(sampleFiles[l.file]);assert.ok(l.options[l.correct]);assert.ok(l.explanation);}});
+test('curated questions route to relevant source; unsupported input stays unsupported',()=>{assert.equal(matchLesson('Where do API keys belong?'),'environment');assert.equal(matchLesson('How does sign-in work?'),'auth');assert.equal(matchLesson('Where is booking data stored?'),'database');assert.equal(matchLesson('What happens when I click book?'),'frontend');assert.equal(matchLesson('What is my hosting bill?'),null);});
+test('diagnosis does not fabricate arbitrary bug findings',()=>{assert.equal(diagnose('Two customers booked the same slot'),'double-booking');assert.equal(diagnose('The logo is blurry'),null);assert.ok(repairPrompt.includes('locate the equivalent code in my actual repository'));assert.ok(repairPrompt.includes('Do not claim the problem is fixed'));});
