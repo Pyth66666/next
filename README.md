@@ -4,7 +4,7 @@ A guidance-first journey: clarify an idea → review a brief → prepare an agen
 
 ## Start locally
 
-Requires Node.js 24+ (native SQLite), with no runtime npm dependencies.
+Requires Node.js 24.x. Run `npm.cmd install` first (`npm install` elsewhere). Local development uses native SQLite unless `DATABASE_URL` is configured. The hosted backend uses the `pg` Postgres driver.
 
 1. Copy `.env.example` to `.env` in this project directory.
 2. Set `NVIDIA_API_KEY` and `NVIDIA_MODEL` locally. Use the exact model ID from your NVIDIA API catalog, with chat-completion support.
@@ -45,13 +45,13 @@ The connection follows GitHub's [user authorization flow](https://docs.github.co
 
 ## Data, limits and safety
 
-The single-process Node server serves the UI and same-origin API. SQLite and its WAL files live in `data/`. Passwords use salted scrypt; session IDs are hashed, with HttpOnly/SameSite cookies, seven-day expiry and per-session CSRF tokens. The API checks ownership for every project, snapshot and quiz. Basic rate limits and upstream timeouts are included.
+Locally, a Node server serves the UI and same-origin API; SQLite and its WAL files live in `data/`. On Vercel, the UI is static and the API uses hosted Postgres without local filesystem writes. Passwords use salted scrypt; session IDs are hashed, with HttpOnly/SameSite cookies, seven-day expiry and per-session CSRF tokens. The API checks ownership for every project, snapshot and quiz. Basic rate limits and upstream timeouts are included. Postgres rate limits are shared across function instances; local SQLite rate limits are in-memory.
 
 Imports read a pinned Git tree and at most 60 supported text files, 30 KB per file, 240,000 characters total. Generated/dependency directories, environment/key files and common credential filenames are excluded. Common token literals and quoted secret assignments are redacted. This is **not a comprehensive secret detector**. Inspect your source before importing; do not import confidential code without permission. Supported source snapshots are partial whenever indexing limits are reached; unsupported files are excluded.
 
 Only selected excerpts (up to 10 files / 65,000 source characters, plus line-number formatting) and recent conversation are sent to NVIDIA per source task. The model does not receive a runnable clone, logs, production database or full repository context. Explanations may be wrong; inspect cited code and test proposed changes yourself.
 
-Source snapshots and chat text are stored unencrypted in SQLite. Protect the data directory with OS access controls. Preserve `data/token.key` with the database when backing up; losing it prevents decrypting saved GitHub tokens. For a consistent live backup use SQLite's backup tooling, or stop the server before copying the full data directory. Never commit `.env` or `data/`.
+Source snapshots and chat text are stored without application-level encryption in the selected database. Configure hosted database access controls and backups. Postgres deployments use a stable private `TOKEN_ENCRYPTION_KEY` environment variable for GitHub tokens. For local SQLite: protect the data directory with OS access controls. Preserve `data/token.key` with the database when backing up; losing it prevents decrypting saved GitHub tokens. For a consistent live backup use SQLite's backup tooling, or stop the server before copying the full data directory. Never commit `.env` or `data/`.
 
 ## Slide-by-slide pitch coaching
 
@@ -59,7 +59,7 @@ Open `/#pitch` or **Pitch studio** in the navigation. Choose a project and eithe
 
 Users can jump between slides, filter unfinished/reviewed slides, enter event criteria and presentation duration, answer guiding questions, plan visuals and write speaker notes. Each track has independent drafts. Evidence is explicitly labelled missing, user-supplied or assumption. Review is a user acknowledgement, never independent verification or investor-readiness certification; editing content reopens it. Export produces an editable Markdown outline with speaker notes and unfinished items, **not PPTX**.
 
-Pitch data is part of each project, saved locally for guests and in SQLite for signed-in users. Import guest projects through Account to use them with live coaching. AI coaching asks focused questions about the current slide and never overwrites content. It uses the saved brief, track criteria, current draft and optional linked snapshot analysis; it does not independently research market facts or authenticate user-entered evidence.
+Pitch data is part of each project, saved locally for guests and in the configured database for signed-in users. Import guest projects through Account to use them with live coaching. AI coaching asks focused questions about the current slide and never overwrites content. It uses the saved brief, track criteria, current draft and optional linked snapshot analysis; it does not independently research market facts or authenticate user-entered evidence.
 
 The project editor also has a five-stage journey. Link an imported repository snapshot to the brief to request source-grounded gap feedback and next steps. Only owned snapshots are linkable. Source feedback does not execute the app or verify its runtime behavior. Generated gap reports and AI slide feedback are session-only; user-authored pitch content is persisted.
 
@@ -71,7 +71,7 @@ Run `npm.cmd install` then `npm.cmd test`. Tests cover the original demo, UI-to-
 
 ## Deployment boundary
 
-This is a functional local MVP, not a production-hardened SaaS. Before public launch add email verification/reset, account and repository deletion/export policies, monitoring, backups, abuse controls/quotas, concurrency/job handling, provider evaluation, and a deployment security review. SQLite needs persistent disk; this server is not intended as an ephemeral serverless function.
+This is a functional MVP, not a production-hardened SaaS. Before public launch add email verification/reset, account and repository deletion/export policies, monitoring, backups, abuse controls/quotas, concurrency/job handling, provider evaluation, and a deployment security review. Local SQLite needs persistent disk. Vercel deployments use hosted Postgres instead; see [DEPLOYMENT.md](DEPLOYMENT.md) for required variables and verification steps.
 
-For an approved hosted deployment, configure `APP_ORIGIN` to its HTTPS origin, `HOST` to the required bind address, and `PORT` to the platform port. Secure cookies are then enabled. Serve UI and API from the same origin. No hosting is provisioned by this project. B2B workstations, mentor/VC matching, Malaysian opportunity routing, automatic code changes and production sandbox execution remain outside this MVP.
+For Vercel, follow the deployment guide; the API entrypoint does not listen on a port. For a regular Node host, configure `APP_ORIGIN` to its HTTPS origin, `HOST` to the required bind address, and `PORT` to the platform port. Secure cookies are then enabled. Serve UI and API from the same origin. The Vercel adapter and routing configuration are included, but a hosted database and production secrets must be provisioned separately. Existing local SQLite data is untouched and is not automatically migrated. B2B workstations, mentor/VC matching, Malaysian opportunity routing, automatic code changes and production sandbox execution remain outside this MVP.
 
