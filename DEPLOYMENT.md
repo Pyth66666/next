@@ -15,9 +15,11 @@ Open **Settings → Environment Variables**. Configure these for **Production**:
 - `DATABASE_URL`: the full Postgres connection string, including the password and TLS options.
 - `APP_ORIGIN`: `https://apexelerate.vercel.app` (change this if your public domain differs). Use only the origin, not a path. API writes reject other origins.
 - `TOKEN_ENCRYPTION_KEY`: one private, stable, random 32-byte key encoded as **64 hexadecimal characters**.
-- `NVIDIA_API_KEY`: your existing NVIDIA API key.
-- `NVIDIA_MODEL`: the exact model ID from your NVIDIA API example, such as the one you previously selected: `deepseek-ai/deepseek-v4.1-flash`. Availability and responsiveness still depend on NVIDIA.
-- `NVIDIA_BASE_URL`: `https://integrate.api.nvidia.com/v1` (also the default).
+- `AI_PROVIDER`: `gemini` (also the default). Set this explicitly if you previously chose NVIDIA.
+- `GEMINI_API_KEY`: copy the Apexelerate key from [Google AI Studio](https://aistudio.google.com/api-keys) into this private Vercel variable.
+- `GEMINI_MODEL`: `gemini-3.5-flash-lite`. This default supports text generation and a free tier, subject to Google project/model quotas. See [current Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing). Change it if your project uses another supported text model.
+
+Existing `NVIDIA_API_KEY`, `NVIDIA_MODEL` and `NVIDIA_BASE_URL` are ignored when `AI_PROVIDER=gemini`. There is no need to copy your Google key into the old NVIDIA variable.
 
 Generate the encryption key once in your own terminal:
 
@@ -50,7 +52,7 @@ The initial database request creates the schema under a transaction-scoped Postg
 1. Open the homepage. It should load independently of database availability.
 2. Open `/api/health`; expect `{"ok":true}`. This checks database connectivity and schema initialization.
 3. Create an account, save a project and refresh. Sign out and sign in again to verify persistence.
-4. Test a brief request. Missing NVIDIA settings produce a configuration error; an upstream timeout remains a separate NVIDIA issue, not a database failure.
+4. Test a brief request. Missing Gemini settings produce a configuration error; an upstream timeout or quota limit remains a separate Google API issue, not a database failure.
 5. Import a public repository, then test architecture analysis, tutoring and a quiz.
 6. If configured, connect GitHub and verify the callback on the same public origin.
 
@@ -64,7 +66,7 @@ Use a separate database/branch and encryption key for Preview deployments. Set t
 
 ## Limits
 
-Tests exercise real Postgres SQL through an embedded PGlite engine with injected transport. They do not certify your hosted database, Vercel account configuration, GitHub consent or live NVIDIA model. Those require the checks above.
+Tests exercise real Postgres SQL through an embedded PGlite engine with injected transport. They do not certify your hosted database, Vercel account configuration, GitHub consent or live Gemini model. Those require the checks above.
 
 Source imports and AI requests are still synchronous and bounded; large/slow GitHub imports can exceed a function deadline. Hosted Postgres does not add background jobs. Enable provider backups, monitor errors and usage, and add stronger abuse protection, email verification/password reset and deletion/export policies before a public launch.
 

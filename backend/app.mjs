@@ -43,7 +43,7 @@ export function createApplication(options={}){
  const url=new URL(req.url,config.origin),path=url.pathname,method=req.method;const s=await session(req);if(path.startsWith('/api/')){
  if(!['GET','HEAD'].includes(method)){if(req.headers.origin!==config.origin)throw new ApiError(403,'The request origin was rejected.');if(!['/api/auth/register','/api/auth/login'].includes(path)&&(!s||req.headers['x-csrf-token']!==s.csrf))throw new ApiError(403,'Sign in again before making changes.');}
  if(path==='/api/health'&&method==='GET'){await db.prepare('SELECT 1 AS ok').get();return json(res,200,{ok:true});}
- if(path==='/api/config'&&method==='GET')return json(res,200,{aiConfigured:!!(config.nvidiaKey&&config.model),model:config.model||null,githubConfigured:!!(config.githubId&&config.githubSecret)});
+ if(path==='/api/config'&&method==='GET')return json(res,200,{aiConfigured:!!((config.provider==='nvidia'?config.nvidiaKey:config.geminiKey)&&config.model),provider:config.provider||'gemini',providerName:config.provider==='nvidia'?'NVIDIA':'Gemini',model:config.model||null,githubConfigured:!!(config.githubId&&config.githubSecret)});
  if(path==='/api/auth/me'&&method==='GET')return json(res,200,{user:s?{id:s.user_id,email:s.email}:null,csrf:s?.csrf||null,github:s?(await db.prepare('SELECT login FROM github WHERE user_id=?').get(s.user_id))||null:null});
  if(['/api/auth/register','/api/auth/login'].includes(path)&&method==='POST')return auth(req,res,path);
  if(!s)throw new ApiError(401,'Sign in to continue.');const user=s.user_id;

@@ -10,7 +10,7 @@ import {configuration} from '../backend/config.mjs';
 test('website completes account, server save, real source tutor and quiz journey',async()=>{
  const dataDir=mkdtempSync(join(tmpdir(),'apex-ui-'));
  const service={async ai(system,user){return {text:user.startsWith('Create one')?JSON.stringify({question:'What does hello return?',options:['A greeting','An error','A cookie'],answer:0,explanation:'src/app.js:1 returns hello.',source:'src/app.js'}):'src/app.js:1 returns a greeting.',model:'fixture-model',usage:{prompt_tokens:25,completion_tokens:10}};},async github(path){if(path==='/repos/demo/mvp')return {full_name:'demo/mvp',default_branch:'main'};if(path.includes('/commits/'))return {sha:'abc123456789',commit:{tree:{sha:'tree'}}};if(path.includes('/git/trees/'))return {tree:[{type:'blob',path:'src/app.js',sha:'blob',size:30}],truncated:false};if(path.endsWith('/blobs/blob'))return {encoding:'base64',content:Buffer.from('export const hello = "hello";').toString('base64')};throw Error(path);}};
- const config={...configuration({}),dataDir,port:0,nvidiaKey:'test',model:'fixture-model'};
+ const config={...configuration({}),dataDir,port:0,geminiKey:'test',model:'fixture-model'};
  const {server,store}=createApplication({config,providers:service});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;
  const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:config.origin});const {window}=dom;
  const names=['window','document','location','localStorage','navigator','requestAnimationFrame','fetch','FormData','Event'];const previous=new Map(names.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));const nativeFetch=globalThis.fetch;let cookie='';
@@ -27,7 +27,7 @@ test('website completes account, server save, real source tutor and quiz journey
   click('[data-action=new]');await until(()=>document.querySelector('#answer'));
   for(const v of ['A coaching booking app','Book a session easily','Customers and coaches','Two weeks no payments','Browse coaches and book a slot']){fill('#answer',v);click('[data-action=next]');}
   await until(()=>store.db.prepare('SELECT data FROM projects').all().some(r=>JSON.parse(r.data).output));
-  click('[data-learn=pack]');assert.ok(document.querySelector('[data-nvidia-prompt]'));click('[data-nvidia-prompt]');await until(()=>document.querySelector('.pack-dialog textarea').value.includes('src/app.js:1'));click('.pack-dialog .close');
+  click('[data-learn=pack]');assert.ok(document.querySelector('[data-ai-prompt]'));click('[data-ai-prompt]');await until(()=>document.querySelector('.pack-dialog textarea').value.includes('src/app.js:1'));click('.pack-dialog .close');
   const projectId=JSON.parse(store.db.prepare('SELECT data FROM projects').get().data).id;
   location.hash=`pitch/${projectId}/startup/title`;await until(()=>document.querySelector('#pitch-headline'));
   fill('#pitch-headline','Book a coach in minutes');fill('[data-pitch-answer=identity]','CoachBook');fill('[data-pitch-answer=summary]','Simple bookings for local coaches');click('[data-pitch=review]');

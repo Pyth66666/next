@@ -7,14 +7,14 @@ A guidance-first journey: clarify an idea → review a brief → prepare an agen
 Requires Node.js 24.x. Run `npm.cmd install` first (`npm install` elsewhere). Local development uses native SQLite unless `DATABASE_URL` is configured. The hosted backend uses the `pg` Postgres driver.
 
 1. Copy `.env.example` to `.env` in this project directory.
-2. Set `NVIDIA_API_KEY` and `NVIDIA_MODEL` locally. Use the exact model ID from your NVIDIA API catalog, with chat-completion support.
+2. Set `GEMINI_API_KEY` locally using a key from Google AI Studio. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; use `AI_PROVIDER=gemini` when switching from NVIDIA.
 3. Run `npm.cmd start` on Windows (`npm start` elsewhere).
 4. Open http://localhost:4174. Use this exact origin, not 127.0.0.1, because write requests verify the configured origin.
 5. Create an account through **Sign in**, then create a project. Existing browser projects can be imported explicitly through **Account**.
 
 Without API credentials, accounts and saved projects work; sample lessons and template prompts remain usable. Live AI controls return a configuration message rather than fabricated AI results. Restart the server after changing configuration.
 
-The hosted model adapter uses NVIDIA's [LLM chat-completions endpoint](https://docs.api.nvidia.com/nim/reference/llm-apis). A server-configured HTTPS base URL can be supplied through `NVIDIA_BASE_URL`. API keys are never sent to the browser. Brief responses cap output at 2,200 tokens and quizzes at 1,200; truncated responses are rejected. Token estimates in the prompt studio are characters divided by four, not a tokenizer or a savings guarantee. Actual provider usage is displayed when returned. Jev and DSPy are not integrated.
+The default AI adapter uses Google's [Gemini generateContent API](https://ai.google.dev/api/generate-content). Keys stay on the server. `gemini-3.5-flash-lite` is the default for initial testing; Google lists a free tier subject to model/project quota. You can change `GEMINI_MODEL` to another available text model. Requests use a bounded output budget (2,200 tokens by default, 1,200 for quizzes), including thinking tokens; Gemini 3 Flash-Lite uses minimal thinking. Truncated, blocked and empty responses return clear errors. Actual input, output and thinking usage is displayed when returned. Prompt estimates remain characters divided by four, not a tokenizer or a savings guarantee. Jev and DSPy are not integrated. The legacy NVIDIA adapter remains available only with explicit `AI_PROVIDER=nvidia`, `NVIDIA_API_KEY` and `NVIDIA_MODEL`; it is never used as an automatic fallback.
 
 ## GitHub setup
 
@@ -35,8 +35,8 @@ The connection follows GitHub's [user authorization flow](https://docs.github.co
 ## Try the complete flow
 
 - Complete the five brief questions, then edit the generated template draft.
-- Ask NVIDIA for follow-up questions or a proposed brief. A proposed brief replaces yours only when you click **Use this brief**.
-- Open **Review Agent Build Pack**, choose guided/concise and build/verification/change. Refine with NVIDIA if desired, review, then copy or download.
+- Ask your AI coach for follow-up questions or a proposed brief. A proposed brief replaces yours only when you click **Use this brief**.
+- Open **Review Agent Build Pack**, choose guided/concise and build/verification/change. Refine with AI if desired, review, then copy or download.
 - Paste the prompt into your external coding agent and build there.
 - Open **My code**, select a repository/branch and import it. An immutable commit snapshot is stored; re-import for newer code.
 - Analyze architecture, search/view numbered source files, or ask questions. Choose beginner/intermediate/advanced, quick/steps/deep, English/Bahasa Melayu, and chat/walkthrough/quiz/debug.
@@ -49,7 +49,7 @@ Locally, a Node server serves the UI and same-origin API; SQLite and its WAL fil
 
 Imports read a pinned Git tree and at most 60 supported text files, 30 KB per file, 240,000 characters total. Generated/dependency directories, environment/key files and common credential filenames are excluded. Common token literals and quoted secret assignments are redacted. This is **not a comprehensive secret detector**. Inspect your source before importing; do not import confidential code without permission. Supported source snapshots are partial whenever indexing limits are reached; unsupported files are excluded.
 
-Only selected excerpts (up to 10 files / 65,000 source characters, plus line-number formatting) and recent conversation are sent to NVIDIA per source task. The model does not receive a runnable clone, logs, production database or full repository context. Explanations may be wrong; inspect cited code and test proposed changes yourself.
+Only selected excerpts (up to 10 files / 65,000 source characters, plus line-number formatting) and recent conversation are sent to the configured AI provider per source task. The model does not receive a runnable clone, logs, production database or full repository context. Explanations may be wrong; inspect cited code and test proposed changes yourself.
 
 Source snapshots and chat text are stored without application-level encryption in the selected database. Configure hosted database access controls and backups. Postgres deployments use a stable private `TOKEN_ENCRYPTION_KEY` environment variable for GitHub tokens. For local SQLite: protect the data directory with OS access controls. Preserve `data/token.key` with the database when backing up; losing it prevents decrypting saved GitHub tokens. For a consistent live backup use SQLite's backup tooling, or stop the server before copying the full data directory. Never commit `.env` or `data/`.
 
@@ -67,11 +67,15 @@ Hackathon prompts are Apexelerate adaptations layered over the supplied structur
 
 ## Verification
 
-Run `npm.cmd install` then `npm.cmd test`. Tests cover the original demo, UI-to-backend account/save/import/tutor/quiz/pitch journey, ten-section source mapping, independent pitch tracks, review reopening, exports, repository-link ownership, ownership, CSRF, source redaction, provider request format and upstream errors. Tests use **mocked NVIDIA and GitHub responses**, not live credentials. Live model quality, GitHub consent and production deployment still need your configured credentials and manual verification.
+Run `npm.cmd install` then `npm.cmd test`. Tests cover the original demo, UI-to-backend account/save/import/tutor/quiz/pitch journey, ten-section source mapping, independent pitch tracks, review reopening, exports, repository-link ownership, ownership, CSRF, source redaction, provider request format and upstream errors. Tests use **mocked AI-provider and GitHub responses**, not live credentials. Live model quality, GitHub consent and production deployment still need your configured credentials and manual verification.
 
 ## Deployment boundary
 
 This is a functional MVP, not a production-hardened SaaS. Before public launch add email verification/reset, account and repository deletion/export policies, monitoring, backups, abuse controls/quotas, concurrency/job handling, provider evaluation, and a deployment security review. Local SQLite needs persistent disk. Vercel deployments use hosted Postgres instead; see [DEPLOYMENT.md](DEPLOYMENT.md) for required variables and verification steps.
 
 For Vercel, follow the deployment guide; the API entrypoint does not listen on a port. For a regular Node host, configure `APP_ORIGIN` to its HTTPS origin, `HOST` to the required bind address, and `PORT` to the platform port. Secure cookies are then enabled. Serve UI and API from the same origin. The Vercel adapter and routing configuration are included, but a hosted database and production secrets must be provisioned separately. Existing local SQLite data is untouched and is not automatically migrated. B2B workstations, mentor/VC matching, Malaysian opportunity routing, automatic code changes and production sandbox execution remain outside this MVP.
+
+## Phone layout
+
+The site includes a collapsible keyboard-accessible navigation menu, larger touch targets, readable form fields, stacked workspace panels and scrollable code/slide navigation. Phone styles cover the brief builder, filters, project editor, account, repository tutor, prompt dialogs and pitch studio. The navigation closes after choosing a destination or pressing Escape.
 

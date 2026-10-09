@@ -72,7 +72,7 @@ test('live brief and prompt routes preserve user requirements',async t=>{
 });
 
 test('provider adapter keeps credentials server-side and rejects truncated responses',async()=>{
- const config={nvidiaKey:'private-key',model:'chosen-model',nvidiaBase:'https://integrate.api.nvidia.com/v1'};let captured;
+ const config={provider:'nvidia',nvidiaKey:'private-key',model:'chosen-model',nvidiaBase:'https://integrate.api.nvidia.com/v1'};let captured;
  const p=providers(config,async(url,options)=>{captured={url,options};return new Response(JSON.stringify({choices:[{message:{content:'Answer'},finish_reason:'stop'}],usage:{prompt_tokens:10}}));});
  assert.equal((await p.ai('system','user')).text,'Answer');assert.equal(captured.options.headers.Authorization,'Bearer private-key');assert.equal(JSON.parse(captured.options.body).model,'chosen-model');assert.match(captured.url,/\/chat\/completions$/);
  await assert.rejects(providers({},()=>{}).ai('',''),e=>e.status===503);
@@ -118,5 +118,5 @@ test('GitHub authorization binds state to session, consumes it once and encrypts
 test('static server does not expose configuration, storage or backend sources',async t=>{
  const f=await fixture(t),a=f.client();for(const path of ['/.env','/data/token.key','/backend/store.mjs'])assert.equal((await a.request(path)).status,404);
  const home=await a.request('/');assert.equal(home.status,200);assert.match(home.value,/cloud.css/);assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
- const config=await a.request('/api/config');assert.equal(config.value.githubSecret,undefined);assert.equal(config.value.nvidiaKey,undefined);
+ const config=await a.request('/api/config');assert.equal(config.value.githubSecret,undefined);assert.equal(config.value.nvidiaKey,undefined);assert.equal(config.value.geminiKey,undefined);assert.equal(config.value.providerName,'Gemini');assert.equal(config.value.aiConfigured,false);
 });
