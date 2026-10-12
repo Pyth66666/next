@@ -9,6 +9,7 @@ import {configuration} from './config.mjs';
 import {createStore,hash} from './store.mjs';
 import {providers,ApiError,parseJson,jsonFetch,eligibleFile,redact,contextFiles,fileContext,tutorPolicy} from './providers.mjs';
 import {promptFor} from '../public/studio-data.js';
+import {compileForTarget} from './prompt-compiler.mjs';
 import {pitchSlides,validatePitch,slideDraft} from '../public/pitch-data.js';
 const scrypt=promisify(scryptCallback),root=resolve(import.meta.dirname,'../public');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
@@ -50,6 +51,11 @@ export function createApplication(options={}){
  if(path==='/api/auth/me'&&method==='GET')return json(res,200,{user:s?{id:s.user_id,email:s.email,isAdmin:isAdmin(s.user_id)}:null,csrf:s?.csrf||null,github:s?(await db.prepare('SELECT login FROM github WHERE user_id=?').get(s.user_id))||null:null});
  if(['/api/auth/register','/api/auth/login'].includes(path)&&method==='POST')return auth(req,res,path);
  if(!s)throw new ApiError(401,'Sign in to continue.');const user=s.user_id;
+ if(path==='/api/prompt/compile'&&method==='POST'){
+  await rate(`compile:${user}`,10,600000);const b=await body(req);
+  if(typeof b.source!=='string'||!b.source.trim()||b.source.length>30000)throw new ApiError(400,'Use a non-empty prompt of at most 30,000 characters.');
+  return json(res,200,await compileForTarget(b.source,choose(b.target,['reference-o200k','gemini'],'reference-o200k'),config,options.fetcher||fetch));
+ }
  if(path==='/api/admin/demo'&&method==='GET'){if(!isAdmin(user))throw new ApiError(403,'Administrator access required.');return json(res,200,{sampleFiles,lessons,repairPrompt,extensions});}
  if(path==='/api/auth/logout'&&method==='POST'){(await db.prepare('DELETE FROM sessions WHERE id=?').run(s.id));cookie(res,'',0);return json(res,200,{ok:true});}
  if(path==='/api/progress'){if(method==='GET'){const r=(await db.prepare('SELECT data FROM progress WHERE user_id=?').get(user));return json(res,200,r?JSON.parse(r.data):{});}if(method==='PUT'){const b=await body(req);if(!b||typeof b!=='object'||Array.isArray(b))throw new ApiError(400,'Invalid progress.');const existing=(await db.prepare('SELECT data FROM progress WHERE user_id=?').get(user));b.quizPasses=existing?JSON.parse(existing.data).quizPasses||[]:[];if(JSON.stringify(b).length>20000)throw new ApiError(400,'Progress is too large.');(await db.prepare('INSERT INTO progress VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data').run(user,JSON.stringify(b)));return json(res,200,{ok:true});}}

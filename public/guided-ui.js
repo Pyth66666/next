@@ -1,4 +1,5 @@
 import {promptFor} from './studio-data.js';
+import {installCompilerPanel} from './prompt-compiler-ui.js';
 
 const icons={home:'⌂',projects:'▦',learn:'⌘',pitch:'↗',account:'◎'};
 export function installGuidedUI({app,header,esc,getProjects,getActive,cloud}){
@@ -13,7 +14,7 @@ export function installGuidedUI({app,header,esc,getProjects,getActive,cloud}){
  function detailsAround(node,title,cls=''){if(!node||node.parentElement?.classList.contains('gui-details'))return;const d=document.createElement('details');d.className='gui-details '+cls;const summary=document.createElement('summary');summary.textContent=title;node.before(d);d.append(summary,node);return d;}
  function projectEditor(){
   const root=app.querySelector('.editor'),p=getActive();if(!root||!p||root.dataset.guided)return;root.dataset.guided='true';
-  const current=stages.get(p.id)||'build';
+  const current=stages.get(p.id)||'build';let compilerPanel;
   root.querySelector('.editor-heading p').textContent='Your idea, one step at a time.';
   const focus=document.createElement('section');focus.className='project-focus';
   focus.innerHTML=`<nav class="journey-rail" aria-label="Your project journey">${['plan','build','understand','pitch'].map((s,i)=>`<button data-project-stage="${s}" aria-current="${current===s?'step':'false'}"><span>${s==='plan'?'✓':i+1}</span><strong>${s[0].toUpperCase()+s.slice(1)}</strong><small>${['Your idea','Make it real','Learn your app','Tell your story'][i]}</small></button>`).join('')}</nav><div class="focus-content" data-focus-content></div>`;
@@ -33,6 +34,7 @@ export function installGuidedUI({app,header,esc,getProjects,getActive,cloud}){
     content.innerHTML=`<span class="eyebrow">02 / MAKE IT REAL</span><h2>Your brief. Ready to build.</h2><p>Review your brief below, then copy the builder prompt into your AI coding tool.</p><div class="inline-build-documents"><section class="inline-build-card" aria-labelledby="inline-brief-title"><div class="inline-build-heading"><h3 id="inline-brief-title">Your brief</h3><span>What you want to build</span></div><pre class="inline-build-brief" data-inline-brief></pre><div class="inline-build-actions"><button class="button light" data-action="copy">Copy brief</button><button class="button light" data-action="download">Download brief ↓</button></div></section><section class="inline-build-card" aria-labelledby="inline-prompt-title"><div class="inline-build-heading"><h3 id="inline-prompt-title">Builder prompt</h3><span>Includes your complete brief</span></div><label class="sr-only" for="inline-build-prompt">Builder prompt</label><textarea id="inline-build-prompt" readonly spellcheck="false"></textarea><div class="inline-build-actions"><button class="button orange" data-inline-copy>Copy prompt ↗</button><button class="button light" data-inline-download>Download prompt ↓</button></div><p class="inline-build-feedback" data-inline-feedback role="status"></p></section></div><details class="gui-details inline-prompt-settings"><summary>Prompt settings & advanced tasks</summary><p>Choose concise instructions, verify an existing MVP, or request a focused change.</p><button class="button light" data-learn="pack">Customize instructions ↗</button></details><a class="text-link" href="${p.repositoryId?'#code/'+esc(p.repositoryId):'#repositories'}">Already built it? Explore your code →</a>`;
     syncBuildDocuments();
     const field=content.querySelector('#inline-build-prompt'),feedback=content.querySelector('[data-inline-feedback]');
+    compilerPanel=installCompilerPanel(field,(...args)=>cloud.request(...args));
     content.querySelector('[data-inline-copy]').onclick=async()=>{try{await window.navigator.clipboard.writeText(field.value);feedback.textContent='Prompt copied. Paste it into your AI coding tool.';}catch{field.focus();field.select();feedback.textContent='Copy the selected prompt manually, or use Download prompt.';}};
     content.querySelector('[data-inline-download]').onclick=()=>{const url=window.URL.createObjectURL(new window.Blob([field.value],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='apexelerate-build-guided.md';a.click();window.setTimeout(()=>window.URL.revokeObjectURL(url),1000);};
    }
@@ -40,7 +42,7 @@ export function installGuidedUI({app,header,esc,getProjects,getActive,cloud}){
    if(value==='pitch')content.innerHTML=`<span class="eyebrow">04 / TELL YOUR STORY</span><h2>Who are you pitching to?</h2><div class="pitch-choice-row"><a href="#pitch/${esc(p.id)}/hackathon/title"><span>⚑</span><strong>Hackathon</strong><small>Your demo, impact & judging criteria</small><i>↗</i></a><a href="#pitch/${esc(p.id)}/startup/title"><span>↗</span><strong>Startup / investors</strong><small>Your customers, business & next step</small><i>↗</i></a></div>`;
   };
   function syncBuildDocuments(){const output=root.querySelector('#output')?.value??p.output??'',brief=root.querySelector('[data-inline-brief]'),prompt=root.querySelector('#inline-build-prompt');if(brief)brief.textContent=output;if(prompt)prompt.value=promptFor({...p,output});}
-  root.addEventListener('input',e=>{if(e.target.id==='output')syncBuildDocuments();});
+  root.addEventListener('input',e=>{if(e.target.id==='output'){syncBuildDocuments();compilerPanel?.reset();}});
   focus.addEventListener('click',e=>{const b=e.target.closest('[data-project-stage]');if(b)setStage(b.dataset.projectStage);});
   setStage(current);
  }

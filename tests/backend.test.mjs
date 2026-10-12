@@ -24,6 +24,18 @@ async function fixture(t){
  return {app,client,calls,setBadQuiz:()=>badQuiz=true};
 }
 
+test('prompt compiler requires authentication, validates input and makes no generation calls',async t=>{
+ const f=await fixture(t),user=f.client();
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:'No payments.'})).status,403);
+ await user.register('compiler@example.com');
+ const r=await user.request('/api/prompt/compile','POST',{source:'No payments.',target:'reference-o200k'});
+ assert.equal(r.status,200);assert.equal(r.value.text,'No payments.');assert.equal(r.value.roundTripVerified,true);assert.equal(f.calls.length,0);
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:' '})).status,400);
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:'a'.repeat(30001)})).status,400);
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:'brief',target:'other'})).status,400);
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:'brief'},{'X-CSRF-Token':'wrong'})).status,403);
+});
+
 test('admin demo requires a server-approved existing account ID, and revocation affects active sessions',async t=>{
  const f=await fixture(t),guest=f.client(),admin=f.client(),normal=f.client();
  assert.equal((await guest.request('/api/admin/demo')).status,401);
