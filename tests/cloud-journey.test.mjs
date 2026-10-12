@@ -33,7 +33,7 @@ test('website completes account, server save, real source tutor and quiz journey
   click('[data-project-stage=plan]');assert.equal(document.querySelector('.brief-details').hidden,false);
   click('[data-project-stage=understand]');assert.equal(document.querySelector('.brief-details').hidden,true);assert.equal(document.querySelector('.build-loop').hidden,false);
   click('[data-project-stage=pitch]');assert.equal(document.querySelectorAll('.pitch-choice-row a').length,2);
-  click('[data-project-stage=build]');assert.equal(document.querySelector('.handoff').hidden,false);
+  click('[data-project-stage=build]');assert.ok(document.querySelector('#inline-build-prompt').value.includes(document.querySelector('#output').value));assert.equal(document.querySelector('.inline-prompt-settings').open,false);
   click('[data-learn=pack]');assert.ok(document.querySelector('[data-ai-prompt]'));click('[data-ai-prompt]');await until(()=>document.querySelector('.pack-dialog textarea').value.includes('src/app.js:1'));click('.pack-dialog .close');
   const projectId=JSON.parse(store.db.prepare('SELECT data FROM projects').get().data).id;
   location.hash=`pitch/${projectId}/startup/title`;await until(()=>document.querySelector('#pitch-headline'));
