@@ -9,7 +9,8 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #e6
 .button.orange{background:var(--orange)}
 .text-link{font-size:12px}.eyebrow{font-size:10px;letter-spacing:1.6px;line-height:1.7}
 .guided-nav{position:fixed;inset:0 auto 0 0;width:var(--gui-sidebar);height:100dvh;padding:36px 20px 24px;display:flex;flex-direction:column;align-items:stretch;justify-content:start;gap:0;background:#f1f2eb;border-right:1px solid var(--line);border-bottom:0;margin:0;z-index:40}
-.guided-nav .brand{font-size:22px;letter-spacing:-1px;gap:8px}.guided-nav .mark{width:29px;height:31px;font-size:20px}
+/* Preserve the original wordmark and solid apex symbol within the new navigation. */
+.guided-nav .brand{--orange:#ed4b24;font-size:25px;letter-spacing:-1.2px;gap:9px}.guided-nav .mark{width:33px;height:33px;font-size:0;flex-shrink:0}
 .sidebar-caption{font-size:8px;letter-spacing:1.2px;color:#898e80;margin:18px 0 43px}
 .guided-nav{flex-wrap:nowrap}
 .guided-nav nav{display:flex;flex-direction:column;align-items:stretch;gap:7px;flex-basis:auto;max-height:none;width:100%;overflow:visible;flex-shrink:0}
