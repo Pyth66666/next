@@ -30,6 +30,13 @@ test('serverless configuration failure returns actionable JSON, not an invocatio
  assert.equal(status,503);assert.match(result.error,/DATABASE_URL/);assert.equal(headers['Cache-Control'],'no-store');
 });
 
+test('configuration errors identify the field without echoing its secret value',()=>{
+ const secret='private-value-do-not-echo';
+ for(const [field,env]of [['TOKEN_ENCRYPTION_KEY',{DATABASE_URL:'postgres://fixture/db',TOKEN_ENCRYPTION_KEY:secret}],['APP_ORIGIN',{APP_ORIGIN:secret}],['GEMINI_MODEL',{GEMINI_MODEL:secret+'/bad'}]]){
+  assert.throws(()=>configuration(env),e=>e.field===field&&!e.message.includes(secret));
+ }
+});
+
 test('Postgres-backed API persists accounts, projects, source tutoring and encrypted GitHub tokens across instances',async t=>{
  const engine=new PGlite();
  // Embedded real Postgres SQL engine; transport is injected, not a live hosted DB.

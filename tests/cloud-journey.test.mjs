@@ -22,20 +22,35 @@ test('website completes account, server save, real source tutor and quiz journey
  const click=s=>{const el=document.querySelector(s);assert.ok(el,s);el.click();};const fill=(s,v)=>{const el=document.querySelector(s);assert.ok(el,s);el.value=v;el.dispatchEvent(new window.Event('input',{bubbles:true}));};const submit=s=>document.querySelector(s).dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
  try{
   await import('../public/app.js');await until(()=>document.querySelector('[data-account-link]'));
-  location.hash='account';await until(()=>document.querySelector('#account-form'));
-  fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#studio-projects'));
+  location.hash='repositories';await until(()=>document.querySelector('#account-form'));
+  fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));
+  assert.equal(location.hash,'#repositories');assert.equal(document.querySelector('[data-admin-nav]'),null);
+  location.hash='dashboard';await until(()=>document.querySelector('#studio-projects'));
   click('[data-action=new]');await until(()=>document.querySelector('#answer'));
   for(const v of ['A coaching booking app','Book a session easily','Customers and coaches','Two weeks no payments','Browse coaches and book a slot']){fill('#answer',v);click('[data-action=next]');}
   await until(()=>store.db.prepare('SELECT data FROM projects').all().some(r=>JSON.parse(r.data).output));
+  await until(()=>document.querySelector('.project-focus'));
+  click('[data-project-stage=plan]');assert.equal(document.querySelector('.brief-details').hidden,false);
+  click('[data-project-stage=understand]');assert.equal(document.querySelector('.brief-details').hidden,true);assert.equal(document.querySelector('.build-loop').hidden,false);
+  click('[data-project-stage=pitch]');assert.equal(document.querySelectorAll('.pitch-choice-row a').length,2);
+  click('[data-project-stage=build]');assert.equal(document.querySelector('.handoff').hidden,false);
   click('[data-learn=pack]');assert.ok(document.querySelector('[data-ai-prompt]'));click('[data-ai-prompt]');await until(()=>document.querySelector('.pack-dialog textarea').value.includes('src/app.js:1'));click('.pack-dialog .close');
   const projectId=JSON.parse(store.db.prepare('SELECT data FROM projects').get().data).id;
   location.hash=`pitch/${projectId}/startup/title`;await until(()=>document.querySelector('#pitch-headline'));
+  await until(()=>document.querySelector('.question-stepper'));
+  assert.equal([...document.querySelectorAll('.pitch-question-list>label')].filter(l=>!l.hidden).length,1);
+  click('[data-question-next]');assert.match(document.querySelector('.question-stepper').textContent,/Question 2/);
+  click('[data-question-back]');assert.match(document.querySelector('.question-stepper').textContent,/Question 1/);
   fill('#pitch-headline','Book a coach in minutes');fill('[data-pitch-answer=identity]','CoachBook');fill('[data-pitch-answer=summary]','Simple bookings for local coaches');click('[data-pitch=review]');
   await until(()=>JSON.parse(store.db.prepare('SELECT data FROM projects').get().data).pitch?.startup?.slides.title.reviewed);
   click('[data-pitch=coach]');await until(()=>document.querySelector('#pitch-ai-feedback pre'));assert.equal(document.querySelector('#pitch-headline').value,'Book a coach in minutes');
   location.hash=`pitch/${projectId}/hackathon/title`;await until(()=>document.querySelector('#pitch-headline')?.value==='');fill('#pitch-headline','Our hackathon demo');
   await until(()=>JSON.parse(store.db.prepare('SELECT data FROM projects').get().data).pitch?.hackathon?.slides.title.headline==='Our hackathon demo');
-  location.hash='repositories';await until(()=>document.querySelector('#repository-form'));fill('#repository-name','demo/mvp');submit('#repository-form');await until(()=>document.querySelector('#real-input'));
+  location.hash='repositories';await until(()=>document.querySelector('#repository-form'));fill('#repository-name','https://github.com/demo/mvp');submit('#repository-form');await until(()=>document.querySelector('#real-input'));
+  await until(()=>document.querySelector('.app-explorer'));
+  assert.equal(document.querySelector('.source-disclosure').open,false);
+  click('[data-learning-activity=debug]');await until(()=>document.querySelector('#real-activity')?.value==='debug'&&document.querySelector('[data-learning-activity=chat]'));
+  click('[data-learning-activity=chat]');await until(()=>document.querySelector('#real-activity')?.value==='chat'&&document.querySelector('[data-learning-activity=debug]'));
   assert.match(document.querySelector('h1').textContent,/demo\/mvp/);click('[data-cloud=analyze]');await until(()=>document.querySelector('#analysis-output').textContent.includes('src/app.js:1'));
   fill('#real-input','Explain hello');submit('#real-question');await until(()=>document.querySelector('.chat-answer'));assert.match(document.querySelector('.chat-answer').textContent,/greeting/);
   const activity=document.querySelector('#real-activity');activity.value='quiz';activity.dispatchEvent(new window.Event('change',{bubbles:true}));fill('#real-input','hello');submit('#real-question');await until(()=>document.querySelector('[data-real-answer]'));click('[data-real-answer="0"]');await until(()=>document.querySelector('#real-quiz-feedback').textContent.includes('Correct'));

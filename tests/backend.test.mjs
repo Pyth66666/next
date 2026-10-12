@@ -24,6 +24,27 @@ async function fixture(t){
  return {app,client,calls,setBadQuiz:()=>badQuiz=true};
 }
 
+test('admin demo requires a server-approved existing account ID, and revocation affects active sessions',async t=>{
+ const f=await fixture(t),guest=f.client(),admin=f.client(),normal=f.client();
+ assert.equal((await guest.request('/api/admin/demo')).status,401);
+ const signed=await admin.register('admin@example.com');
+ assert.equal(signed.value.user.isAdmin,false);
+ await normal.register('normal@example.com');
+ assert.equal((await admin.request('/api/admin/demo')).status,403);
+ f.app.config.adminUserIds=[signed.value.user.id];
+ assert.equal((await admin.request('/api/auth/me')).value.user.isAdmin,true);
+ const demo=await admin.request('/api/admin/demo');
+ assert.equal(demo.status,200);assert.equal(demo.value.lessons.length,5);
+ assert.ok(demo.value.sampleFiles['src/BookingForm.jsx']);
+ assert.match(demo.headers.get('cache-control'),/no-store/);
+ assert.equal((await normal.request('/api/admin/demo','GET',undefined,{'X-Admin':'true'})).status,403);
+ assert.equal((await guest.request('/learning-data.js')).status,404);
+ assert.equal((await guest.request('/backend/demo-data.mjs')).status,404);
+ f.app.config.adminUserIds=[];
+ assert.equal((await admin.request('/api/admin/demo')).status,403);
+ assert.equal((await admin.request('/api/auth/me')).value.user.isAdmin,false);
+});
+
 test('accounts, cookies, CSRF, ownership and durable project storage',async t=>{
  const f=await fixture(t),a=f.client(),b=f.client();
  assert.equal((await a.request('/api/projects')).status,401);

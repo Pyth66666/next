@@ -1,0 +1,84 @@
+const icons={home:'⌂',projects:'▦',learn:'⌘',pitch:'↗',account:'◎'};
+export function installGuidedUI({app,header,esc,getProjects,getActive,cloud}){
+ const document=app.ownerDocument,window=document.defaultView,location=window.location;
+ const stages=new Map(),questionSteps=new Map();
+ const shorten=(s,n=150)=>String(s||'').length>n?String(s).slice(0,n)+'…':s;
+ function home(){
+  const recent=[...getProjects()].sort((a,b)=>(b.updated||b.created)-(a.updated||a.created))[0];
+  app.innerHTML=`${header()}<main class="welcome-page wrap"><div class="welcome-top"><span class="eyebrow"><i class="live-dot"></i> YOUR IDEAS HAVE A PLACE HERE</span><span class="welcome-location">Made in Malaysia · Built for you</span></div><section class="welcome-intro"><span class="welcome-spark" aria-hidden="true">✳</span><h1>Big idea?<br><span>Let’s make it happen.</span></h1><p>A little direction. A clear next step. Something you can call yours.</p></section><section class="start-choices" aria-label="Choose where to start"><button class="start-choice choice-idea" data-action="new"><span class="choice-top"><span class="choice-icon">✳</span><span class="choice-number">01 / START</span></span><h2>I have an idea</h2><p>Turn it into a clear plan and instructions for your AI builder.</p><span class="choice-bottom">Shape my idea <i>↗</i></span></button><a class="start-choice" href="#repositories"><span class="choice-top"><span class="choice-icon">⌘</span><span class="choice-number">02 / UNDERSTAND</span></span><h2>I’ve built something</h2><p>Bring your GitHub project. Learn how it works and what to improve.</p><span class="choice-bottom">Understand my app <i>↗</i></span></a><a class="start-choice" href="#pitch"><span class="choice-top"><span class="choice-icon">↗</span><span class="choice-number">03 / SHARE</span></span><h2>I need to pitch</h2><p>Find your story, one slide at a time. For hackathons or investors.</p><span class="choice-bottom">Prepare my pitch <i>↗</i></span></a></section>${recent?`<a class="resume-project" href="#project/${esc(recent.id)}"><span class="resume-icon">↶</span><div><small>PICK UP WHERE YOU LEFT OFF</small><strong>${esc(shorten(recent.answers[0]||'Your new idea',85))}</strong></div><span>Continue →</span></a>`:`<div class="welcome-footer"><span>YOUR PACE. YOUR THINKING.</span><p>You bring the idea. We help you take the next step.</p><a href="#how" class="text-link">How it works ↓</a></div>`}<details class="how-disclosure" ${location.hash==='#how'?'open':''}><summary>How Apexelerate works <span>+</span></summary><div class="mini-journey">${[['01','Plan','Answer five questions. Get a brief and builder instructions.'],['02','Build','Use your preferred AI coding tool to build and test.'],['03','Understand','Bring your code back. Learn, ask questions, and improve.'],['04','Pitch','Prepare your story for a hackathon or startup meeting.']].map(([n,t,p])=>`<article><span>${n}</span><h3>${t}</h3><p>${p}</p></article>`).join('')}</div></details></main>`;
+  enhance();
+ }
+ function detailsAround(node,title,cls=''){if(!node||node.parentElement?.classList.contains('gui-details'))return;const d=document.createElement('details');d.className='gui-details '+cls;const summary=document.createElement('summary');summary.textContent=title;node.before(d);d.append(summary,node);return d;}
+ function projectEditor(){
+  const root=app.querySelector('.editor'),p=getActive();if(!root||!p||root.dataset.guided)return;root.dataset.guided='true';
+  const current=stages.get(p.id)||'build';
+  root.querySelector('.editor-heading p').textContent='Your idea, one step at a time.';
+  const focus=document.createElement('section');focus.className='project-focus';
+  focus.innerHTML=`<nav class="journey-rail" aria-label="Your project journey">${['plan','build','understand','pitch'].map((s,i)=>`<button data-project-stage="${s}" aria-current="${current===s?'step':'false'}"><span>${s==='plan'?'✓':i+1}</span><strong>${s[0].toUpperCase()+s.slice(1)}</strong><small>${['Your idea','Make it real','Learn your app','Tell your story'][i]}</small></button>`).join('')}</nav><div class="focus-content" data-focus-content></div>`;
+  root.querySelector('.editor-heading').after(focus);
+  const doc=detailsAround(root.querySelector('.editor-grid'),'View & edit my full brief','brief-details');
+  const packButton=root.querySelector('.handoff [data-learn="pack"]');if(packButton)packButton.textContent='Open builder instructions ↗';
+  const handoffCopy=root.querySelector('.handoff p');if(handoffCopy)handoffCopy.textContent='Review the instructions, then copy them into your AI coding tool.';
+  const tools=detailsAround(root.querySelector('.live-brief-tools'),'Work through my brief with AI','brief-ai-details');
+  root.querySelectorAll('.project-overview,.next-action,.pitch-project-banner,.storage-note,.build-loop-heading,.build-loop-steps').forEach(n=>n.hidden=true);
+  const setStage=value=>{
+   stages.set(p.id,value);focus.querySelectorAll('[data-project-stage]').forEach(b=>b.setAttribute('aria-current',b.dataset.projectStage===value?'step':'false'));
+   if(doc)doc.hidden=value!=='plan';if(tools)tools.hidden=value!=='plan';
+   const handoff=root.querySelector('.handoff'),loop=root.querySelector('.build-loop');
+   if(handoff)handoff.hidden=value!=='build';if(loop)loop.hidden=value!=='understand';
+   const content=focus.querySelector('[data-focus-content]');
+   if(value==='plan')content.innerHTML=`<span class="eyebrow">01 / YOUR PLAN</span><h2>A clear starting point.</h2><div class="brief-summary">${[['The outcome',p.answers[1]],['Who it’s for',p.answers[2]],['Your boundaries',p.answers[3]]].map(([k,v])=>`<div><span>${k}</span><p>${esc(shorten(v))}</p></div>`).join('')}</div><button class="button orange" data-project-stage="build">Continue to build →</button>`;
+   if(value==='build')content.innerHTML='<span class="eyebrow">02 / MAKE IT REAL</span><h2>Your builder instructions are ready.</h2><p>Copy them into your AI coding tool. Come back when your app is in GitHub.</p>';
+   if(value==='understand')content.innerHTML=`<span class="eyebrow">03 / MAKE IT MAKE SENSE</span><h2>Get to know your app.</h2><p>Add your GitHub project, then follow the code with your tutor.</p><a class="button orange" href="${p.repositoryId?'#code/'+esc(p.repositoryId):'#repositories'}">${p.repositoryId?'Open my app':'Add my app'} ↗</a>`;
+   if(value==='pitch')content.innerHTML=`<span class="eyebrow">04 / TELL YOUR STORY</span><h2>Who are you pitching to?</h2><div class="pitch-choice-row"><a href="#pitch/${esc(p.id)}/hackathon/title"><span>⚑</span><strong>Hackathon</strong><small>Your demo, impact & judging criteria</small><i>↗</i></a><a href="#pitch/${esc(p.id)}/startup/title"><span>↗</span><strong>Startup / investors</strong><small>Your customers, business & next step</small><i>↗</i></a></div>`;
+  };
+  focus.addEventListener('click',e=>{const b=e.target.closest('[data-project-stage]');if(b)setStage(b.dataset.projectStage);});
+  setStage(current);
+ }
+ function builder(){
+  const panel=app.querySelector('.question-main');if(!panel||panel.dataset.guided)return;panel.dataset.guided='true';
+  const help=document.createElement('button');help.className='question-help text-link';help.type='button';help.textContent='Help me answer this +';help.setAttribute('aria-expanded','false');
+  panel.querySelector('h1').after(help);help.onclick=()=>{const shown=panel.classList.toggle('show-help');help.setAttribute('aria-expanded',String(shown));help.textContent=shown?'Less guidance −':'Help me answer this +';};
+ }
+ function pitch(){
+  const page=app.querySelector('#pitch-workspace');if(!page||page.dataset.guided)return;page.dataset.guided='true';
+  page.querySelector('.pitch-heading h1').textContent='Let’s shape your story.';
+  page.querySelector('.pitch-heading p').textContent='One slide. One clear point.';
+  detailsAround(page.querySelector('.pitch-context-bar'),'Audience, event & pitch time','pitch-context-details');
+  page.querySelector('.pitch-evidence')?.removeAttribute('open');
+  detailsAround(page.querySelector('#pitch-coach'),'✳ Talk it through with your coach','coach-drawer');
+  const key=location.hash,list=page.querySelector('.pitch-question-list'),fields=[...list.children];
+  if(fields.length){
+   let step=Math.min(questionSteps.get(key)||0,fields.length-1);
+   const control=document.createElement('div');control.className='question-stepper';list.after(control);
+   function show(){fields.forEach((f,i)=>f.hidden=i!==step);control.innerHTML=`<button class="text-link" type="button" data-question-back ${step===0?'disabled':''}>← Back</button><span>Question ${step+1} of ${fields.length}</span><button class="text-link" type="button" data-question-next ${step===fields.length-1?'disabled':''}>Next question →</button>`;questionSteps.set(key,step);}
+   control.onclick=e=>{if(e.target.closest('[data-question-back]')&&step>0)step--;if(e.target.closest('[data-question-next]')&&step<fields.length-1)step++;show();};show();
+  }
+ }
+ function learning(){
+  const page=app.querySelector('.real-code');if(!page||page.dataset.guided)return;page.dataset.guided='true';
+  detailsAround(page.querySelector('.tutor-controls'),'Learning preferences','learning-settings');
+  const files=page.querySelector('.file-browser'),paths=[...files.querySelectorAll('[data-real-file]')].map(b=>b.dataset.realFile);
+  const groups=[{name:'What people see',icon:'▣',test:p=>/\.(jsx|tsx|html|vue|svelte|css)$/.test(p)||/(^|\/)(components|pages|views)\//i.test(p),question:'Explain the user interface in my app, using actual source files. What happens when a user interacts with it?'},{name:'What my app does',icon:'⌘',test:p=>/(^|\/)(api|server|routes|controllers|functions)\b|server\.[cm]?[jt]s/i.test(p),question:'Explain the server or API in my app. Trace one request, cite the source, and say what you cannot confirm.'},{name:'What it remembers',icon:'▤',test:p=>/schema|prisma|migration|database|\.sql$/i.test(p),question:'Explain how my app stores information, based on its actual source. If persistence is missing or unclear, explain that.'}];
+  const map=document.createElement('section');map.className='app-explorer';map.innerHTML=`<div class="explorer-title"><div><span class="eyebrow">LET’S CONNECT THE DOTS</span><h2>Which part are you curious about?</h2></div><span class="source-pill">Your GitHub source</span></div><div class="app-parts">${groups.map((g,i)=>{const count=paths.filter(g.test).length;return `<button type="button" data-app-part="${i}" ${count?'':'disabled'}><span class="part-icon">${g.icon}</span><strong>${g.name}</strong><small>${count?count+' related file'+(count===1?'':'s'):'No matching files identified'}</small><i>↗</i></button>`;}).join('')}</div><p class="map-caption">Grouped by file name. Ask your tutor to explain the actual connections.</p>`;
+  page.querySelector('.real-code-grid').before(map);
+  map.onclick=e=>{const b=e.target.closest('[data-app-part]');if(!b)return;chooseActivity('walkthrough',groups[Number(b.dataset.appPart)].question);};
+  const main=page.querySelector('.real-main'),modes=document.createElement('div');modes.className='learning-actions';modes.setAttribute('aria-label','Choose a learning activity');modes.innerHTML=[['chat','✳','Explain simply'],['walkthrough','↳','Walk me through it'],['quiz','?','Quiz me'],['debug','⌁','Help with a problem']].map(([v,i,n])=>`<button type="button" data-learning-activity="${v}" aria-pressed="${page.querySelector('#real-activity').value===v}"><span>${i}</span>${n}</button>`).join('');
+  page.querySelector('.real-chat-title').before(modes);
+  modes.onclick=e=>{const b=e.target.closest('[data-learning-activity]');if(b)chooseActivity(b.dataset.learningActivity);};
+  const source=detailsAround(files,'Show the code & files','source-disclosure');if(source)main.after(source);
+  const analysis=page.querySelector('#analysis-output');if(analysis&&analysis.textContent.trim())detailsAround(analysis,'Your app overview','analysis-disclosure');
+ }
+ function chooseActivity(value,question){const select=app.querySelector('#real-activity');if(!select)return;const previous=app.querySelector('#real-input')?.value||'';select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));const input=app.querySelector('#real-input');if(input){input.value=question||previous;input.focus();input.scrollIntoView({behavior:'smooth',block:'center'});}}
+ function enhance(){
+  if(!app.isConnected||!window.document?.body)return;
+  const h=location.hash.slice(1);document.body.dataset.screen=h.startsWith('pitch/')?'pitch':h.startsWith('project/')?'project':h.startsWith('code/')?'learn':h||'home';
+  app.querySelectorAll('.nav nav a,.mobile-dock a').forEach(a=>{const target=a.hash.slice(1);const active=target==='home'?!h||['home','how','templates'].includes(h):target==='dashboard'?h==='dashboard'||h.startsWith('project/'):target==='repositories'?['repositories','learn','connect'].includes(h)||h.startsWith('code/'):target==='pitch'?h.startsWith('pitch'):h===target;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  projectEditor();builder();pitch();learning();
+ }
+ let pending=false;const observer=new window.MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;enhance();});});observer.observe(app,{childList:true,subtree:true});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')app.querySelectorAll('.coach-drawer[open]').forEach(d=>d.open=false);});
+ return {home,enhance};
+}
+
+export function navigationMarkup(logo){return `<header class="nav guided-nav">${logo}<span class="sidebar-caption">A LITTLE GUIDANCE. REAL PROGRESS.</span><button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-navigation" aria-expanded="false"><span>Menu</span><span class="nav-toggle-icon" aria-hidden="true"><i></i><i></i></span></button><nav id="main-navigation" aria-label="Main navigation"><a href="#home"><span>${icons.home}</span>Start here</a><a href="#dashboard"><span>${icons.projects}</span>My projects</a><a href="#repositories"><span>${icons.learn}</span>Learn my app</a><a href="#pitch" data-pitch-nav><span>${icons.pitch}</span>Pitch studio</a><a href="#account" data-account-link><span>${icons.account}</span><span data-account-label>Sign in</span></a></nav><div class="sidebar-foot"><span class="sidebar-mini-mark">✳</span><strong>Make something yours.</strong><p>One small step at a time.</p><span class="cloud-status">Saved on this device</span></div></header><nav class="mobile-dock" aria-label="Quick navigation"><a href="#dashboard"><span>${icons.projects}</span>Projects</a><a href="#repositories"><span>${icons.learn}</span>Learn</a><a href="#pitch"><span>${icons.pitch}</span>Pitch</a><a href="#account"><span>${icons.account}</span>Account</a></nav>`;}

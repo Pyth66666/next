@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
+import {installLearningExperience} from '../public/learning.js';
+import {sampleFiles,lessons,repairPrompt} from '../backend/demo-data.mjs';
+import {extensions} from '../backend/demo-extensions.mjs';
 
-test('brief, agent handoff, sample learning and repair work together',async()=>{
+test('public handoff uses real-code entry points; admin demonstration retains learning and repair',async()=>{
  const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'http://localhost:4173/'});
  const {window}=dom;
  const globals=['window','document','location','localStorage','navigator','requestAnimationFrame'];
@@ -20,7 +23,7 @@ test('brief, agent handoff, sample learning and repair work together',async()=>{
  const fill=(selector,value)=>{const el=window.document.querySelector(selector);assert.ok(el);el.value=value;el.dispatchEvent(new window.Event('input',{bubbles:true}));};
  try{
   await import('../public/app.js');
-  assert.match(window.document.querySelector('h1').textContent,/Understand/);
+  assert.match(window.document.querySelector('h1').textContent,/Big idea/);
   click('[data-action="new"]');await tick();
   assert.match(window.document.querySelector('.builder-sidebar>.eyebrow').textContent,/MVP/);
   const answers=['A booking app for coaches','Book a session in three minutes','Customers and coaches with separate permissions','Two weeks, mobile friendly, no payments','Browse coaches; Select slot; Book session; Show confirmation'];
@@ -46,8 +49,12 @@ test('brief, agent handoff, sample learning and repair work together',async()=>{
   changeSelect('#studio-type','sop');assert.equal(window.document.querySelectorAll('.project-card').length,0);
   click('[data-studio="clear"]');click('[data-view="list"]');assert.ok(window.document.querySelector('.project-list-view'));
   await go('project/'+saved[0].id);assert.equal(window.document.querySelector('#output').value,edited);
-  await go('connect');assert.match(window.document.querySelector('.connection-card small').textContent,/does not access GitHub/);
-  await go('learn');click('[data-concept="database"]');
+  assert.equal(window.document.querySelectorAll('a[href="#learn"]').length,0);
+  await go('learn');await tick();assert.equal(window.location.hash,'#repositories');
+  assert.equal(window.document.querySelector('.learn-workspace'),null);
+  // Exercise the preserved demo renderer independently after server-authorized data loading.
+  const demo=installLearningExperience({app:document.querySelector('#app'),header:()=>'',esc:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),toast:()=>{},getActive:()=>null,save:()=>{},canDemo:()=>true});
+  demo.setDemo({sampleFiles,lessons,repairPrompt,extensions});click('[data-concept="database"]');
   assert.match(window.document.querySelector('.source-header').textContent,/db\/schema.prisma/);
   click('[data-quiz="0"]');assert.match(window.document.querySelector('#quiz-feedback').textContent,/Not quite/);
   click('[data-quiz="2"]');assert.match(window.document.querySelector('#quiz-feedback').textContent,/Correct/);

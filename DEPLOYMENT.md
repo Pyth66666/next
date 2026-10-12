@@ -71,3 +71,9 @@ Tests exercise real Postgres SQL through an embedded PGlite engine with injected
 Source imports and AI requests are still synchronous and bounded; large/slow GitHub imports can exceed a function deadline. Hosted Postgres does not add background jobs. Enable provider backups, monitor errors and usage, and add stronger abuse protection, email verification/password reset and deletion/export policies before a public launch.
 
 References: [Vercel function configuration](https://vercel.com/docs/project-configuration/vercel-json), [Node.js functions](https://vercel.com/docs/functions/runtimes/node-js), [node-postgres pooling](https://node-postgres.com/features/pooling).
+
+## Admin-only demonstration
+
+Normal learning links open real GitHub snapshots. CoachBook source and lessons are served only by the authenticated `/api/admin/demo` endpoint, outside the public directory.
+
+Sign in to the intended administrator account, copy its Account ID from Account, and add that UUID to `ADMIN_USER_IDS` in Vercel Production. Redeploy. Multiple approved account IDs can be comma-separated. Admin accounts then see **Admin demo** in navigation. Do not use emails as roles: this MVP does not verify email ownership. Never store an admin password in source or environment configuration. Removing an ID and redeploying revokes endpoint access for existing sessions too.
