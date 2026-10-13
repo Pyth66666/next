@@ -36,7 +36,7 @@ The connection follows GitHub's [user authorization flow](https://docs.github.co
 
 - Complete the five brief questions, then edit the generated template draft.
 - Ask your AI coach for follow-up questions or a proposed brief. A proposed brief replaces yours only when you click **Use this brief**.
-- Open **Review Agent Build Pack**, choose guided/concise and build/verification/change. Refine with AI if desired, review, then copy or download.
+- Open **Review Agent Build Pack**, choose guided/concise and build/verification/change. The optional AI coach suggests clarifying questions and brief-grounded checks in a separate review; it cannot rewrite your approved brief. Apply a reviewed draft, then copy or download.
 - Paste the prompt into your external coding agent and build there.
 - Open **My code**, select a repository/branch and import it. An immutable commit snapshot is stored; re-import for newer code.
 - Analyze architecture, search/view numbered source files, or ask questions. Choose beginner/intermediate/advanced, quick/steps/deep, English/Bahasa Melayu, and chat/walkthrough/quiz/debug.

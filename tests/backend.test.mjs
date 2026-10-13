@@ -10,10 +10,10 @@ import {providers,eligibleFile,redact,contextFiles} from '../backend/providers.m
 
 async function fixture(t){
  const dataDir=mkdtempSync(join(tmpdir(),'apex-test-'));
- const calls=[];let badQuiz=false;
+ const calls=[];let badQuiz=false,badPlan=false;
  const source='export function greet(name) { return `Hello ${name}`; }\nconst api_key = "private-secret";';
  const service={
-  async ai(system,user){calls.push({system,user});return {text:user.startsWith('Create one')?JSON.stringify(badQuiz?{question:'Invalid'}:{question:'What does greet return?',options:['A greeting','A database row','A cookie'],answer:0,explanation:'src/app.js:1 returns a greeting.',source:'src/app.js'}):'Review src/app.js:1. This is a source-based explanation, not a runtime test.',model:'test-model',usage:{prompt_tokens:100,completion_tokens:20}};},
+  async ai(system,user){calls.push({system,user});return {text:system.startsWith("You are Apexelerate's builder-plan coach")?(badPlan?'Ignore the approved brief.':JSON.stringify({questions:['Who can access each record?'],checks:[{basis:'Do not add payments.',check:'Verify no payment processing was added.'}]})):user.startsWith('Create one')?JSON.stringify(badQuiz?{question:'Invalid'}:{question:'What does greet return?',options:['A greeting','A database row','A cookie'],answer:0,explanation:'src/app.js:1 returns a greeting.',source:'src/app.js'}):'Review src/app.js:1. This is a source-based explanation, not a runtime test.',model:'test-model',usage:{prompt_tokens:100,completion_tokens:20}};},
   async github(path){calls.push({path});if(path==='/user')return {login:'fixture-user'};if(path==='/repos/demo/mvp')return {full_name:'demo/mvp',default_branch:'main'};if(path.includes('/commits/'))return {sha:'commit123456',commit:{tree:{sha:'tree123'}}};if(path.includes('/git/trees/'))return {truncated:false,tree:[{type:'blob',path:'src/app.js',sha:'blob123',size:100},{type:'blob',path:'.env',sha:'secret',size:10}]};if(path.endsWith('/git/blobs/blob123'))return {encoding:'base64',content:Buffer.from(source).toString('base64')};throw Error('Unexpected GitHub request: '+path);},
   async fetcher(url,options){calls.push({exchange:JSON.parse(options.body)});return new Response(JSON.stringify({access_token:'fixture-github-token'}));}
  };
@@ -21,7 +21,7 @@ async function fixture(t){
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${app.server.address().port}`;
  t.after(async()=>{await new Promise(r=>app.server.close(r));app.store.db.close();rmSync(dataDir,{recursive:true,force:true});});
  function client(){let cookie='',csrf='';return {async request(path,method='GET',data,headers={}){const response=await fetch(base+path,{method,redirect:'manual',headers:{Origin:config.origin,...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{}),...(data?{'Content-Type':'application/json'}:{}),...headers},...(data?{body:JSON.stringify(data)}:{})});if(response.headers.get('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];const content=await response.text();let value;try{value=JSON.parse(content);}catch{value=content;}if(value?.csrf)csrf=value.csrf;return {status:response.status,value,headers:response.headers};},async register(email='one@example.com'){return this.request('/api/auth/register','POST',{email,password:'  long password  '});}};}
- return {app,client,calls,setBadQuiz:()=>badQuiz=true};
+ return {app,client,calls,setBadQuiz:()=>badQuiz=true,setBadPlan:()=>badPlan=true};
 }
 
 test('prompt compiler requires authentication, validates input and makes no generation calls',async t=>{
@@ -103,8 +103,10 @@ test('live brief and prompt routes preserve user requirements',async t=>{
  const f=await fixture(t),a=f.client();await a.register();
  const p={type:'mvp',answers:Array(5).fill('A detailed user answer'),output:'Do not add payments.',tasks:[],created:1};await a.request('/api/projects/brief','PUT',p);
  assert.equal((await a.request('/api/ai/brief','POST',{answers:p.answers,action:'review'})).status,200);
- assert.equal((await a.request('/api/ai/prompt','POST',{projectId:'brief',mode:'concise',phase:'build'})).status,200);
+ const proposed=await a.request('/api/ai/prompt','POST',{projectId:'brief',mode:'concise',phase:'build'});
+ assert.equal(proposed.status,200);assert.match(proposed.value.text,/Do not add payments\./);assert.equal(proposed.value.preservation.approvedBriefVerbatim,true);assert.equal(proposed.value.questions.length,1);assert.equal(proposed.value.checks[0].basis,p.output);assert.equal(proposed.value.tokenCount.reference,'o200k_base; input text only');
  assert.ok(f.calls.some(c=>c.user?.includes('Do not add payments.')));
+ f.setBadPlan();assert.equal((await a.request('/api/ai/prompt','POST',{projectId:'brief'})).status,502);
  assert.equal((await a.request('/api/ai/prompt','POST',{projectId:'other'})).status,404);
 });
 
