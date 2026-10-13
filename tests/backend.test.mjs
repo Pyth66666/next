@@ -40,6 +40,23 @@ test('prompt compiler requires authentication, validates input and makes no gene
  assert.equal((await user.request('/api/prompt/compile','POST',{source:'brief'},{'X-CSRF-Token':'wrong'})).status,403);
 });
 
+test('invalid AI provider does not block account creation or manual project routes',async t=>{
+ const dataDir=mkdtempSync(join(tmpdir(),'apex-no-ai-'));
+ const config={...configuration({AI_PROVIDER:'"gemini"'}),dataDir,port:0};
+ const app=createApplication({config});
+ await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
+ t.after(async()=>{await new Promise(r=>app.server.close(r));app.store.db.close();rmSync(dataDir,{recursive:true,force:true});});
+ const base=`http://127.0.0.1:${app.server.address().port}`;
+ const settings=await (await fetch(base+'/api/config')).json();
+ assert.equal(settings.aiConfigured,false);assert.equal(settings.provider,null);
+ const response=await fetch(base+'/api/auth/register',{method:'POST',headers:{Origin:config.origin,'Content-Type':'application/json'},body:JSON.stringify({email:'manual@example.com',password:'a long password'})});
+ assert.equal(response.status,200);
+ const account=await response.json();assert.equal(account.user.email,'manual@example.com');
+ const cookie=response.headers.get('set-cookie').split(';')[0];
+ const project=await fetch(base+'/api/projects/manual-project',{method:'PUT',headers:{Origin:config.origin,Cookie:cookie,'X-CSRF-Token':account.csrf,'Content-Type':'application/json'},body:JSON.stringify({type:'mvp',answers:['A manual idea','A clear outcome','People and roles','Small scope','Simple journey'],problemArea:'student',output:'A manual brief',tasks:[]})});
+ assert.equal(project.status,200);
+});
+
 test('admin demo requires a server-approved existing account ID, and revocation affects active sessions',async t=>{
  const f=await fixture(t),guest=f.client(),admin=f.client(),normal=f.client();
  assert.equal((await guest.request('/api/admin/demo')).status,401);

@@ -32,9 +32,11 @@ test('serverless configuration failure returns actionable JSON, not an invocatio
 
 test('configuration errors identify the field without echoing its secret value',()=>{
  const secret='private-value-do-not-echo';
- for(const [field,env]of [['TOKEN_ENCRYPTION_KEY',{DATABASE_URL:'postgres://fixture/db',TOKEN_ENCRYPTION_KEY:secret}],['APP_ORIGIN',{APP_ORIGIN:secret}],['GEMINI_MODEL',{GEMINI_MODEL:secret+'/bad'}]]){
+ for(const [field,env]of [['TOKEN_ENCRYPTION_KEY',{DATABASE_URL:'postgres://fixture/db',TOKEN_ENCRYPTION_KEY:secret}],['APP_ORIGIN',{APP_ORIGIN:secret}]]){
   assert.throws(()=>configuration(env),e=>e.field===field&&!e.message.includes(secret));
  }
+ const ai=configuration({GEMINI_MODEL:secret+'/bad'});
+ assert.equal(ai.provider,null);assert.equal(ai.aiConfigurationError.includes(secret),false);
 });
 
 test('Postgres-backed API persists accounts, projects, source tutoring and encrypted GitHub tokens across instances',async t=>{

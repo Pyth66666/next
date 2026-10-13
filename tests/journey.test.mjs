@@ -26,6 +26,8 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   assert.match(window.document.querySelector('h1').textContent,/Big idea/);
   click('[data-action="new"]');await tick();
   assert.match(window.document.querySelector('.builder-sidebar>.eyebrow').textContent,/MVP/);
+  assert.ok(window.document.querySelector('[data-problem-area="business"]'));
+  click('[data-problem-area="business"]');click('[data-action="next"]');
   const answers=['A booking app for coaches','Book a session in three minutes','Customers and coaches with separate permissions','Two weeks, mobile friendly, no payments','Browse coaches; Select slot; Book session; Show confirmation'];
   for(const answer of answers){fill('#answer',answer);click('[data-action="next"]');}
   assert.ok(window.document.querySelector('#output'));
@@ -77,15 +79,16 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   assert.equal(window.document.querySelectorAll('a[href="#learn"]').length,0);
   await go('dashboard');click('[data-action="new"]');await tick();
   const detailed=window.document.querySelector('input[name="brief-depth"][value="detailed"]');assert.ok(detailed);detailed.checked=true;detailed.dispatchEvent(new window.Event('change',{bubbles:true}));
+  click('[data-problem-area="student"]');click('[data-action="next"]');
   for(const answer of ['A local tutor booking app','Students book a tutor in three minutes','Students and tutors with separate access','Mobile first with no online payments','Find tutor; choose slot; confirm booking']){fill('#answer',answer);click('[data-action="next"]');}
-  assert.ok(window.document.querySelector('[data-detail-answer="roles"]'));
-  fill('[data-detail-answer="roles"]','A student sees only their own bookings.');
-  click('[data-detail-create]');await tick();assert.match(window.document.querySelector('#output').value,/A student sees only their own bookings/);
+  assert.match(window.document.querySelector('h1').textContent,/allowed to see or change/);
+  fill('#answer','A student sees only their own bookings.');click('[data-action="next"]');
+  for(let i=0;i<5;i++)click('[data-action="next"]');await tick();assert.match(window.document.querySelector('#output').value,/A student sees only their own bookings/);
   assert.match(window.document.querySelector('#output').value,/Detailed decisions still open/);
   assert.ok(window.document.querySelector('#inline-build-prompt').value.includes('A student sees only their own bookings.'));
   const savedDetailed=JSON.parse(window.localStorage.getItem('apexelerate.projects.v1'))[0];assert.equal(savedDetailed.briefDepth,'detailed');assert.equal(savedDetailed.detailAnswers.roles,'A student sees only their own bookings.');
-  click('[data-action="edit-answers"]');click('[data-step="4"]');click('[data-action="next"]');assert.ok(window.document.querySelector('[data-detail-create]'));
-  window.confirm=()=>false;fill('[data-detail-answer="roles"]','A student can cancel only their own bookings.');click('[data-detail-create]');assert.equal(JSON.parse(window.localStorage.getItem('apexelerate.projects.v1'))[0].output,savedDetailed.output);
+  click('[data-action="edit-answers"]');click('[data-step="6"]');assert.match(window.document.querySelector('h1').textContent,/allowed to see or change/);
+  window.confirm=()=>false;fill('#answer','A student can cancel only their own bookings.');click('[data-step="11"]');click('[data-action="next"]');assert.equal(JSON.parse(window.localStorage.getItem('apexelerate.projects.v1'))[0].output,savedDetailed.output);
   await go('learn');await tick();assert.equal(window.location.hash,'#repositories');
   assert.equal(window.document.querySelector('.learn-workspace'),null);
   // Exercise the preserved demo renderer independently after server-authorized data loading.

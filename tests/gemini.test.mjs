@@ -7,10 +7,17 @@ test('Gemini is the default even if old NVIDIA credentials remain configured',()
  const config=configuration({NVIDIA_API_KEY:'old-private-key',NVIDIA_MODEL:'old-model'});
  assert.equal(config.provider,'gemini');assert.equal(config.model,'gemini-3.5-flash-lite');assert.equal(config.geminiKey,'');
  assert.equal(configuration({GEMINI_MODEL:'models/gemini-3.5-flash-lite'}).model,'gemini-3.5-flash-lite');
- assert.throws(()=>configuration({GEMINI_MODEL:'../other-service'}),/GEMINI_MODEL/);
- assert.throws(()=>configuration({AI_PROVIDER:'unknown'}),/AI_PROVIDER/);
+ assert.equal(configuration({GEMINI_MODEL:'../other-service'}).provider,null);
+ assert.equal(configuration({AI_PROVIDER:'unknown'}).provider,null);
+ awaitInvalidProvider();
  assert.equal(configuration({AI_PROVIDER:'nvidia',NVIDIA_MODEL:'legacy'}).model,'legacy');
 });
+
+function awaitInvalidProvider(){
+ const config=configuration({AI_PROVIDER:'unknown',GEMINI_API_KEY:'fixture-secret'});
+ assert.equal(config.aiConfigurationError,'AI_PROVIDER must be gemini or nvidia.');
+ assert.equal(config.provider,null);
+}
 
 test('Gemini sends system instructions separately, keeps keys out of URLs and maps text/usage',async()=>{
  const config=configuration({GEMINI_API_KEY:'fixture-google-secret'});let captured;

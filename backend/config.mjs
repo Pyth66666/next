@@ -10,11 +10,12 @@ export function configuration(env=process.env){
  const origin=env.APP_ORIGIN||'http://localhost:4174';let url;
  try{url=new URL(origin);}catch{throw new ConfigurationError('APP_ORIGIN','APP_ORIGIN must be a valid HTTPS origin.');}
  if(!['http:','https:'].includes(url.protocol)||url.pathname!=='/'||url.search||url.hash||url.username||url.password||(!['localhost','127.0.0.1'].includes(url.hostname)&&url.protocol!=='https:'))throw new ConfigurationError('APP_ORIGIN','APP_ORIGIN must be an HTTPS origin or a localhost HTTP origin');
- const provider=env.AI_PROVIDER||'gemini';
- if(!['gemini','nvidia'].includes(provider))throw new ConfigurationError('AI_PROVIDER','AI_PROVIDER must be gemini or nvidia.');
- const model=provider==='gemini'?(env.GEMINI_MODEL||'gemini-3.5-flash-lite').replace(/^models\//,''):env.NVIDIA_MODEL||'';
- if(provider==='gemini'&&!/^gemini-[a-zA-Z0-9.-]+$/.test(model))throw new ConfigurationError('GEMINI_MODEL','GEMINI_MODEL must be a Gemini model ID.');
+ const requestedProvider=env.AI_PROVIDER||'gemini';
+ let provider=['gemini','nvidia'].includes(requestedProvider)?requestedProvider:null;
+ let aiConfigurationError=provider?null:'AI_PROVIDER must be gemini or nvidia.';
+ const model=provider==='gemini'?(env.GEMINI_MODEL||'gemini-3.5-flash-lite').replace(/^models\//,''):provider==='nvidia'?env.NVIDIA_MODEL||'':'';
+ if(provider==='gemini'&&!/^gemini-[a-zA-Z0-9.-]+$/.test(model)){provider=null;aiConfigurationError='GEMINI_MODEL must be a Gemini model ID.';}
  const base=env.NVIDIA_BASE_URL||'https://integrate.api.nvidia.com/v1';
- if(provider==='nvidia'){let baseUrl;try{baseUrl=new URL(base);}catch{throw new ConfigurationError('NVIDIA_BASE_URL','NVIDIA_BASE_URL must use HTTPS');}if(baseUrl.protocol!=='https:')throw new ConfigurationError('NVIDIA_BASE_URL','NVIDIA_BASE_URL must use HTTPS');}
- return {adminUserIds:(env.ADMIN_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean),origin:url.origin,port:Number(env.PORT||url.port||4174),host:env.HOST||'127.0.0.1',dataDir:resolve(env.DATA_DIR||'data'),database:env.DATABASE_PATH,databaseUrl:env.DATABASE_URL||'',tokenKey:env.TOKEN_ENCRYPTION_KEY||'',provider,geminiKey:env.GEMINI_API_KEY||'',nvidiaKey:env.NVIDIA_API_KEY||'',model,nvidiaBase:base.replace(/\/$/,''),githubId:env.GITHUB_CLIENT_ID||'',githubSecret:env.GITHUB_CLIENT_SECRET||'',secure:url.protocol==='https:',maxFiles:60,maxChars:240000};
+ if(provider==='nvidia'){let baseUrl;try{baseUrl=new URL(base);}catch{}if(baseUrl?.protocol!=='https:'){provider=null;aiConfigurationError='NVIDIA_BASE_URL must use HTTPS.';}}
+ return {adminUserIds:(env.ADMIN_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean),origin:url.origin,port:Number(env.PORT||url.port||4174),host:env.HOST||'127.0.0.1',dataDir:resolve(env.DATA_DIR||'data'),database:env.DATABASE_PATH,databaseUrl:env.DATABASE_URL||'',tokenKey:env.TOKEN_ENCRYPTION_KEY||'',provider,aiConfigurationError,geminiKey:env.GEMINI_API_KEY||'',nvidiaKey:env.NVIDIA_API_KEY||'',model,nvidiaBase:base.replace(/\/$/,''),githubId:env.GITHUB_CLIENT_ID||'',githubSecret:env.GITHUB_CLIENT_SECRET||'',secure:url.protocol==='https:',maxFiles:60,maxChars:240000};
 }

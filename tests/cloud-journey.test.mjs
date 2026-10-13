@@ -26,7 +26,7 @@ test('website completes account, server save, real source tutor and quiz journey
   fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));
   assert.equal(location.hash,'#repositories');assert.equal(document.querySelector('[data-admin-nav]'),null);
   location.hash='dashboard';await until(()=>document.querySelector('#studio-projects'));
-  click('[data-action=new]');await until(()=>document.querySelector('#answer'));
+  click('[data-action=new]');await until(()=>document.querySelector('[data-problem-area]'));click('[data-problem-area=business]');click('[data-action=next]');await until(()=>document.querySelector('#answer'));
   for(const v of ['A coaching booking app','Book a session easily','Customers and coaches','Two weeks no payments','Browse coaches and book a slot']){fill('#answer',v);click('[data-action=next]');}
   await until(()=>store.db.prepare('SELECT data FROM projects').all().some(r=>JSON.parse(r.data).output));
   await until(()=>document.querySelector('.project-focus'));

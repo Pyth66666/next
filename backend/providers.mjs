@@ -32,7 +32,7 @@ export function providers(config,fetcher=fetch){
   const usage=r.usageMetadata;
   return {text,model:config.model,usage:usage?{prompt_tokens:usage.promptTokenCount??0,completion_tokens:usage.candidatesTokenCount??0,thinking_tokens:usage.thoughtsTokenCount??0,total_tokens:usage.totalTokenCount??0}:null};
  }
- const ai=config.provider==='nvidia'?nvidia:gemini;
+ const ai=config.provider==='nvidia'?nvidia:config.provider==='gemini'?gemini:async()=>{throw new ApiError(503,'AI provider configuration needs attention. Account and manual tools remain available.');};
 
  async function github(path,token){return jsonFetch(`https://api.github.com${path}`,{headers:{Accept:'application/vnd.github+json','User-Agent':'Apexelerate','X-GitHub-Api-Version':'2022-11-28',...(token?{Authorization:`Bearer ${token}`}:{})}},fetcher);}
  return {ai,github,fetcher};

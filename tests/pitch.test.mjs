@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
 import {pitchSlides,emptySlide,slideReadiness,deckProgress,validatePitch,pitchOutline} from '../public/pitch-data.js';
 import {createPitch} from '../public/pitch.js';
+import {slideCanvas,deckHtml} from '../public/pitch-visual.js';
+
+test('ten visual slides export as self-contained deck without invented figures or unsafe HTML',()=>{
+ const p={answers:['<img src=x onerror=alert(1)>'],pitch:{startup:{slides:{market:{headline:'A real market question',answers:{tam:'RM 10m sourced',sam:'',som:''}},traction:{headline:'No users yet',answers:{metrics:'No revenue yet'}}}}}};
+ const html=deckHtml(p,'startup','.deck-canvas{color:red}');
+ assert.equal((html.match(/class="deck-canvas /g)||[]).length,10);
+ assert.match(html,/deck-circle tam/);assert.match(html,/deck-gtm-path/);assert.match(html,/deck-ask-ring/);
+ assert.match(html,/Conceptual circles/);assert.match(html,/No growth chart is drawn/);
+ assert.ok(!html.includes('<img src=x onerror=alert(1)>'));
+ assert.match(html,/&lt;img src=x onerror=alert\(1\)&gt;/);
+ assert.match(slideCanvas(p,'startup','market'),/RM 10m sourced/);
+});
 
 test('pitch framework preserves all ten PDF sections in order',()=>{
  assert.deepEqual(pitchSlides.map(s=>s.id),['title','problem','solution','market','business','gtm','traction','competition','team','ask']);

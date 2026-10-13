@@ -2,6 +2,7 @@ import {installGuidedUI,navigationMarkup} from './guided-ui.js';
 import {installNavigation} from './navigation.js';
 installNavigation();
 import {questions as mvpQuestions,legacyQuestions,detailQuestions,generate as generateLegacy,checklist as legacyChecklist,generateMvp} from './engine.js';
+import {problemAreas,briefSteps,stepValue,setStepValue} from './brief-flow.js';
 let questions=mvpQuestions;
 const generate=p=>p.type==='mvp'?generateMvp(p):generateLegacy(p);
 const checklist=p=>p.type==='mvp'?['Review the build brief','Copy the pack to your coding agent','Build and test your MVP','Save the code in GitHub','Import your MVP and understand its code'].map(text=>({text,done:false})):legacyChecklist(p);
@@ -35,8 +36,8 @@ const experience=installLearningExperience({app,header,esc,toast,getActive:()=>a
 const studio=createStudio({app,header,esc,toast,getProjects:()=>projects,getActive:()=>active,storageOK:()=>storageOK});
 const originalSave=save;
 let cloud;
-const snapshots=new Map(projects.map(p=>[p.id,JSON.stringify([p.answers,p.briefDepth,p.detailAnswers,p.output,p.tasks,p.pitch,p.repositoryId])]));
-save=()=>{for(const p of projects){const value=JSON.stringify([p.answers,p.briefDepth,p.detailAnswers,p.output,p.tasks,p.pitch,p.repositoryId]);if(snapshots.get(p.id)!==value){p.updated=Date.now();snapshots.set(p.id,value);}}if(cloud?.isAuthenticated()){cloud.queueSave(projects);return true;}return originalSave();};
+const snapshots=new Map(projects.map(p=>[p.id,JSON.stringify([p.answers,p.problemArea,p.briefDepth,p.detailAnswers,p.output,p.tasks,p.pitch,p.repositoryId])]));
+save=()=>{for(const p of projects){const value=JSON.stringify([p.answers,p.problemArea,p.briefDepth,p.detailAnswers,p.output,p.tasks,p.pitch,p.repositoryId]);if(snapshots.get(p.id)!==value){p.updated=Date.now();snapshots.set(p.id,value);}}if(cloud?.isAuthenticated()){cloud.queueSave(projects);return true;}return originalSave();};
 cloud=createCloud({app,header,esc,toast,getProjects:()=>projects,setProjects:data=>{projects=data;active=null;},getActive:()=>active,save:()=>save(),renderCurrent:()=>route(),onDemo:data=>experience.setDemo(data)});
 const pitch=createPitch({app,header,esc,toast,getProjects:()=>projects,save:()=>save(),cloud});
 const projectLoop=createProjectLoop({app,esc,toast,getActive:()=>active,save:()=>save(),cloud});
@@ -47,42 +48,34 @@ editor=()=>{originalEditor();experience.enhanceEditor();studio.details();cloud.b
 const originalBuilder=builder;
 builder=()=>{
  questions=active.type==='mvp'?mvpQuestions:legacyQuestions;
- if(active.type==='mvp'&&step===5&&active.briefDepth==='detailed'){
-  active.detailAnswers ||= {};
-  app.innerHTML=`${header(true)}<main class="builder-layout wrap detailed-brief-layout"><aside class="builder-sidebar"><a class="back-link" href="#dashboard">← All projects</a><div class="eyebrow">MVP BRIEF BUILDER</div><h2>Make the important details clear.</h2><p>The five foundation questions are complete. Answer what you know; anything skipped becomes an open decision.</p></aside><section class="question-panel"><div class="question-top"><span>DETAILS · OPTIONAL</span><span id="save-state">Saved on this device</span></div><div class="progress-track"><div style="width:100%"></div></div><div class="question-main"><span class="big-coach">✳</span><h1>Add useful detail.</h1><p>Your answers appear in the brief; unanswered topics stay open decisions. You can review everything before sharing.</p><div class="brief-detail-fields">${detailQuestions.map(q=>`<label><strong>${esc(q.label)}</strong><span>${esc(q.question)}</span><textarea data-detail-answer="${q.id}" rows="3" maxlength="5000" placeholder="${esc(q.placeholder)}">${esc(active.detailAnswers[q.id]||'')}</textarea></label>`).join('')}</div><div class="question-actions"><button class="button ghost" data-detail-back>← Back</button><button class="button orange" data-detail-create>${active.output?'Replace current brief with updated draft ↗':'Create detailed brief ↗'}</button></div></div></section></main>`;
-  cloud.nav();return;
- }
- originalBuilder();
- if(active.type==='mvp'){
-  app.querySelector('.builder-sidebar>.eyebrow').textContent='MVP BRIEF BUILDER';
-  app.querySelector('.sidebar-bottom p').textContent='Your brief starts with your answers. Optional AI coaching is available later when your server model is ready.';
-  app.querySelector('.question-main').insertAdjacentHTML('afterbegin',`<fieldset class="brief-depth-choice"><legend>How much detail do you want in your brief?</legend><label><input type="radio" name="brief-depth" value="normal" ${active.briefDepth!=='detailed'?'checked':''}><strong>Normal</strong><span>Five essential questions</span></label><label><input type="radio" name="brief-depth" value="detailed" ${active.briefDepth==='detailed'?'checked':''}><strong>Detailed</strong><span>Five essentials, then six optional follow-ups</span></label></fieldset>`);
-  if(active.briefDepth==='detailed'&&step===4)app.querySelector('[data-action="next"]').innerHTML='Continue to details ↗';
- }
- cloud.nav();
+ if(active.type!=='mvp'){originalBuilder();cloud.nav();return;}
+ const flow=briefSteps(active),q=flow[step-1],value=q?stepValue(active,q):'',total=flow.length;
+ const sidebar=`<aside class="builder-sidebar"><a class="back-link" href="#dashboard">← All projects</a><div class="eyebrow">MVP BRIEF BUILDER</div><h2>Start with a problem.<br>Shape a useful app.</h2><div class="question-nav"><button data-step="0" class="${step===0?'current':''}"><span>${active.problemArea?'✓':'00'}</span>Choose a problem</button>${flow.map((x,i)=>`<button data-step="${i+1}" class="${step===i+1?'current':''}"><span>${stepValue(active,x)?'✓':String(i+1).padStart(2,'0')}</span>${esc(x.label)}</button>`).join('')}</div><div class="sidebar-bottom"><strong>Your thinking does the building.</strong><p>The questions create a draft without AI. You can ask the AI coach to refine it later.</p></div></aside>`;
+ const depth=`<fieldset class="brief-depth-choice"><legend>How deeply do you want to plan?</legend><label><input type="radio" name="brief-depth" value="normal" ${active.briefDepth!=='detailed'?'checked':''}><strong>Normal</strong><span>Five quick decisions</span></label><label><input type="radio" name="brief-depth" value="detailed" ${active.briefDepth==='detailed'?'checked':''}><strong>Detailed</strong><span>Deeper product, access, data and testing decisions</span></label></fieldset>`;
+ const content=step===0?`<span class="big-coach">✳</span><h1>What kind of problem are you solving?</h1><p>Choose a starting point. The next questions will use examples that fit your world.</p><div class="problem-area-grid">${problemAreas.map(a=>`<button type="button" data-problem-area="${a.id}" class="${active.problemArea===a.id?'selected':''}" aria-pressed="${active.problemArea===a.id}"><span>${a.icon}</span><strong>${a.label}</strong><small>${a.examples[0]}</small></button>`).join('')}</div>${depth}<p id="answer-error" class="error" role="alert"></p><div class="question-actions"><span></span><button class="button orange" data-action="next">Start my brief ↗</button></div>`:`<span class="big-coach">✳</span><div class="brief-question-context">${esc(problemAreas.find(a=>a.id===active.problemArea)?.label||'Your idea')} · ${active.briefDepth==='detailed'?'Detailed path':'Normal path'}</div><h1>${esc(q.question)}</h1><p>${esc(q.hint)}</p>${q.suggestions.length?`<div class="problem-suggestions"><small>POPULAR STARTING POINTS · EDIT ANY CHOICE</small>${q.suggestions.map(s=>`<button type="button" data-suggestion="${esc(s)}">${esc(s)} ↗</button>`).join('')}</div>`:''}<label class="sr-only" for="answer">${esc(q.question)}</label><textarea id="answer" rows="5" maxlength="5000" placeholder="${esc(q.placeholder)}">${esc(value)}</textarea><div class="answer-meta"><span>${q.kind==='detail'?'Optional: leave blank if you have not decided yet.':'Your words. Your direction.'}</span><span id="char-count">${value.length}/5000</span></div><p id="answer-error" class="error" role="alert"></p><div class="question-actions"><button class="button ghost" data-action="previous">← Back</button><button class="button orange" data-action="next">${step===total?'Create my draft':'Continue'} ↗</button></div>`;
+ app.innerHTML=`${header(true)}<main class="builder-layout wrap brief-flow-layout">${sidebar}<section class="question-panel"><div class="question-top"><span>${step===0?'CHOOSE YOUR PATH':`QUESTION ${String(step).padStart(2,'0')} OF ${String(total).padStart(2,'0')}`}</span><span id="save-state">${storageOK?'Saved on this device':'Not saved — storage unavailable'}</span></div><div class="progress-track"><div style="width:${Math.round(step/(total||1)*100)}%"></div></div><div class="question-main">${content}</div></section></main>`;cloud.nav();
 };
-document.addEventListener('change',e=>{if(e.target.name==='brief-depth'&&active?.type==='mvp'){active.briefDepth=e.target.value;save();builder();if(active.output)toast('Your approved document is unchanged. Complete the questions to replace it with a new draft.');}});
-document.addEventListener('input',e=>{if(e.target.dataset.detailAnswer&&active?.type==='mvp'){active.detailAnswers ||= {};active.detailAnswers[e.target.dataset.detailAnswer]=e.target.value;save();const status=app.querySelector('#save-state');if(status)status.textContent=cloud?.isAuthenticated()?'Account sync — see navigation status':'Saved on this device';}});
+document.addEventListener('change',e=>{if(e.target.name==='brief-depth'&&active?.type==='mvp'){active.briefDepth=e.target.value;save();builder();if(active.output)toast('Your existing document is unchanged until you create a new draft.');}});
+document.addEventListener('input',e=>{if(e.target.id==='answer'&&active?.type==='mvp'&&app.querySelector('.brief-flow-layout')){e.stopPropagation();setStepValue(active,briefSteps(active)[step-1],e.target.value);save();app.querySelector('#char-count').textContent=`${e.target.value.length}/5000`;app.querySelector('#save-state').textContent=cloud?.isAuthenticated()?'Account sync — see navigation status':'Saved on this device';}},true);
 document.addEventListener('click',e=>{
  const button=e.target.closest('button');if(!button||active?.type!=='mvp')return;
- if(button.dataset.action==='next'&&step===4&&active.briefDepth==='detailed'){
-  e.stopImmediatePropagation();const input=app.querySelector('#answer'),value=input?.value.trim()||'';
-  if(value.length<8){app.querySelector('#answer-error').textContent='Add at least 8 characters before continuing.';input.focus();return;}
-  active.answers[4]=value;const missing=active.answers.findIndex(a=>a.trim().length<8);if(missing>=0){step=missing;builder();toast('Complete each foundation question first.');return;}
-  step=5;save();builder();return;
+ if(button.dataset.problemArea){e.stopImmediatePropagation();active.problemArea=button.dataset.problemArea;save();builder();return;}
+ if(!app.querySelector('.brief-flow-layout'))return;
+ if(button.dataset.step!==undefined){e.stopImmediatePropagation();step=Number(button.dataset.step);builder();return;}
+ if(button.dataset.suggestion){e.stopImmediatePropagation();const input=app.querySelector('#answer');input.value=button.dataset.suggestion;setStepValue(active,briefSteps(active)[step-1],input.value);save();builder();app.querySelector('#answer').focus();return;}
+ if(button.dataset.action==='previous'){e.stopImmediatePropagation();step=Math.max(0,step-1);builder();return;}
+ if(button.dataset.action==='next'){
+  e.stopImmediatePropagation();if(step===0){if(!active.problemArea){app.querySelector('#answer-error').textContent='Choose a problem area to continue.';return;}step=1;builder();return;}
+  const flow=briefSteps(active),q=flow[step-1],value=app.querySelector('#answer').value.trim();
+  if(q.kind==='core'&&value.length<8){app.querySelector('#answer-error').textContent='Add a little more detail — at least 8 characters.';app.querySelector('#answer').focus();return;}
+  setStepValue(active,q,value);save();if(step<flow.length){step++;builder();app.querySelector('#answer')?.focus();return;}
+  const missing=active.answers.findIndex(a=>a.trim().length<8);if(missing>=0){step=missing+1;builder();toast('Complete the core questions before creating your draft.');return;}
+  if(active.output&&!window.confirm('Replace your current edited brief with a fresh draft from these answers? Copy or download the existing brief first if you want to keep it.'))return;
+  const fresh=!active.output;active.output=generate(active);if(fresh)active.tasks=checklist(active);save();editor();
  }
- if(button.dataset.action==='next'&&step===4&&active.output&&active.briefDepth!=='detailed'){
-  e.stopImmediatePropagation();const input=app.querySelector('#answer'),value=input?.value.trim()||'';
-  if(value.length<8){app.querySelector('#answer-error').textContent='Add at least 8 characters before continuing.';input.focus();return;}
-  active.answers[4]=value;if(active.answers.some(a=>a.trim().length<8)){toast('Complete each foundation question before replacing your brief.');return;}
-  if(!window.confirm('Replace your current edited brief with a fresh draft from these answers? Copy or download the existing brief first if you want to keep it.'))return;
-  active.output=generate(active);save();editor();return;
- }
- if(button.hasAttribute('data-detail-back')){e.stopImmediatePropagation();step=4;builder();return;}
- if(button.hasAttribute('data-detail-create')){e.stopImmediatePropagation();if(active.output&&!window.confirm('Replace your current edited brief with a fresh draft from these answers? Copy or download the existing brief first if you want to keep it.'))return;const fresh=!active.output;active.output=generate(active);if(fresh)active.tasks=checklist(active);save();editor();}
 },true);
 const originalProject=project;
-project=id=>{originalProject(id);if(active?.id===id&&!active.output&&active.type==='mvp'&&active.briefDepth==='detailed'&&active.answers.every(a=>a.trim().length>=8)){step=5;builder();}};
+project=id=>{const found=projects.find(p=>p.id===id);if(found?.type!=='mvp'){originalProject(id);return;}active=found;const missing=active.answers.findIndex(a=>!a);step=active.problemArea?(missing<0?active.briefDepth==='detailed'?6:5:missing+1):0;if(active.output)editor();else builder();};
 const originalRenderProjects=renderProjects;
 renderProjects=()=>{originalRenderProjects();app.querySelectorAll('.project-card').forEach(card=>{const p=projects.find(p=>card.hash==='#project/'+p.id);if(p?.type==='mvp')card.querySelector('p').textContent='MVP build brief';});};
 dashboard=()=>{studio.dashboard();cloud.nav();pitch.nav();};
