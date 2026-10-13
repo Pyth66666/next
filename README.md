@@ -34,9 +34,9 @@ The connection follows GitHub's [user authorization flow](https://docs.github.co
 
 ## Try the complete flow
 
-- Complete the five brief questions, then edit the generated template draft.
+- Choose **Normal** for the five foundation questions, or **Detailed** for six additional optional questions on access, data, failures, integrations, design and acceptance. Skipped detailed answers become open decisions in the generated brief. Review and edit the draft.
 - Ask your AI coach for follow-up questions or a proposed brief. A proposed brief replaces yours only when you click **Use this brief**.
-- Open **Review Agent Build Pack**, choose guided/concise and build/verification/change. The optional AI coach suggests clarifying questions and brief-grounded checks in a separate review; it cannot rewrite your approved brief. Apply a reviewed draft, then copy or download.
+- In Build, choose **Make prompt without AI** for an immediate template handoff or **Improve prompt with AI** for a separately reviewed proposal. The AI path requires sign-in and a working server model; it asks for clarifying questions and brief-grounded checks but cannot rewrite your approved brief. Both prompts can be copied or downloaded. Response style and advanced tasks remain in the customization dialog.
 - Paste the prompt into your external coding agent and build there.
 - Open **My code**, select a repository/branch and import it. An immutable commit snapshot is stored; re-import for newer code.
 - Analyze architecture, search/view numbered source files, or ask questions. Choose beginner/intermediate/advanced, quick/steps/deep, English/Bahasa Melayu, and chat/walkthrough/quiz/debug.

@@ -33,6 +33,9 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   const inlineBrief=window.document.querySelector('[data-inline-brief]');
   const inlinePrompt=window.document.querySelector('#inline-build-prompt');
   assert.ok(inlineBrief&&inlinePrompt,'Brief and prompt are present without opening a dialog');
+  assert.ok(window.document.querySelector('[data-prompt-method="manual"]'));
+  assert.ok(window.document.querySelector('[data-prompt-method="ai"]'));
+  assert.equal(window.document.querySelector('.prompt-size-details').open,false);
   assert.ok(!inlinePrompt.closest('details'),'Prompt is not collapsed');
   assert.equal(inlineBrief.textContent,window.document.querySelector('#output').value);
   assert.ok(inlinePrompt.value.includes(inlineBrief.textContent));
@@ -72,6 +75,17 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   click('[data-studio="clear"]');click('[data-view="list"]');assert.ok(window.document.querySelector('.project-list-view'));
   await go('project/'+saved[0].id);assert.equal(window.document.querySelector('#output').value,edited);
   assert.equal(window.document.querySelectorAll('a[href="#learn"]').length,0);
+  await go('dashboard');click('[data-action="new"]');await tick();
+  const detailed=window.document.querySelector('input[name="brief-depth"][value="detailed"]');assert.ok(detailed);detailed.checked=true;detailed.dispatchEvent(new window.Event('change',{bubbles:true}));
+  for(const answer of ['A local tutor booking app','Students book a tutor in three minutes','Students and tutors with separate access','Mobile first with no online payments','Find tutor; choose slot; confirm booking']){fill('#answer',answer);click('[data-action="next"]');}
+  assert.ok(window.document.querySelector('[data-detail-answer="roles"]'));
+  fill('[data-detail-answer="roles"]','A student sees only their own bookings.');
+  click('[data-detail-create]');await tick();assert.match(window.document.querySelector('#output').value,/A student sees only their own bookings/);
+  assert.match(window.document.querySelector('#output').value,/Detailed decisions still open/);
+  assert.ok(window.document.querySelector('#inline-build-prompt').value.includes('A student sees only their own bookings.'));
+  const savedDetailed=JSON.parse(window.localStorage.getItem('apexelerate.projects.v1'))[0];assert.equal(savedDetailed.briefDepth,'detailed');assert.equal(savedDetailed.detailAnswers.roles,'A student sees only their own bookings.');
+  click('[data-action="edit-answers"]');click('[data-step="4"]');click('[data-action="next"]');assert.ok(window.document.querySelector('[data-detail-create]'));
+  window.confirm=()=>false;fill('[data-detail-answer="roles"]','A student can cancel only their own bookings.');click('[data-detail-create]');assert.equal(JSON.parse(window.localStorage.getItem('apexelerate.projects.v1'))[0].output,savedDetailed.output);
   await go('learn');await tick();assert.equal(window.location.hash,'#repositories');
   assert.equal(window.document.querySelector('.learn-workspace'),null);
   // Exercise the preserved demo renderer independently after server-authorized data loading.

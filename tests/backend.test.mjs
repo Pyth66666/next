@@ -79,6 +79,16 @@ test('accounts, cookies, CSRF, ownership and durable project storage',async t=>{
  assert.equal((await a.request('/api/projects/owned')).value.id,'owned');
 });
 
+test('detailed brief mode and optional answers persist with validation',async t=>{
+ const f=await fixture(t),a=f.client();await a.register('detailed@example.com');
+ const p={type:'mvp',answers:['Idea','Goal','Users','Constraints','Flow'],briefDepth:'detailed',detailAnswers:{roles:'Customers see only their own bookings.',data:''},output:'Detailed approved brief',tasks:[]};
+ assert.equal((await a.request('/api/projects/detail','PUT',p)).status,200);
+ const saved=(await a.request('/api/projects/detail')).value;
+ assert.equal(saved.briefDepth,'detailed');assert.equal(saved.detailAnswers.roles,p.detailAnswers.roles);
+ assert.equal((await a.request('/api/projects/detail','PUT',{...p,detailAnswers:{unknown:'Surprise'}})).status,400);
+ assert.equal((await a.request('/api/projects/detail','PUT',{...p,detailAnswers:{roles:'x'.repeat(5001)}})).status,400);
+});
+
 test('import, source analysis, tutoring, quiz grading and server-owned progress',async t=>{
  const f=await fixture(t),a=f.client(),b=f.client();await a.register();await b.register('two@example.com');
  const imported=await a.request('/api/repositories','POST',{repository:'demo/mvp'});assert.equal(imported.status,201);const id=imported.value.id;
@@ -103,6 +113,8 @@ test('live brief and prompt routes preserve user requirements',async t=>{
  const f=await fixture(t),a=f.client();await a.register();
  const p={type:'mvp',answers:Array(5).fill('A detailed user answer'),output:'Do not add payments.',tasks:[],created:1};await a.request('/api/projects/brief','PUT',p);
  assert.equal((await a.request('/api/ai/brief','POST',{answers:p.answers,action:'review'})).status,200);
+ assert.equal((await a.request('/api/ai/brief','POST',{answers:p.answers,briefDepth:'detailed',detailAnswers:{roles:'Only owners see their records.'},action:'review'})).status,200);
+ assert.ok(f.calls.some(c=>c.user?.includes('Only owners see their records.')));
  const proposed=await a.request('/api/ai/prompt','POST',{projectId:'brief',mode:'concise',phase:'build'});
  assert.equal(proposed.status,200);assert.match(proposed.value.text,/Do not add payments\./);assert.equal(proposed.value.preservation.approvedBriefVerbatim,true);assert.equal(proposed.value.questions.length,1);assert.equal(proposed.value.checks[0].basis,p.output);assert.equal(proposed.value.tokenCount.reference,'o200k_base; input text only');
  assert.ok(f.calls.some(c=>c.user?.includes('Do not add payments.')));

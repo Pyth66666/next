@@ -1,7 +1,7 @@
 import {installGuidedUI,navigationMarkup} from './guided-ui.js';
 import {installNavigation} from './navigation.js';
 installNavigation();
-import {questions as mvpQuestions,legacyQuestions,generate as generateLegacy,checklist as legacyChecklist,generateMvp} from './engine.js';
+import {questions as mvpQuestions,legacyQuestions,detailQuestions,generate as generateLegacy,checklist as legacyChecklist,generateMvp} from './engine.js';
 let questions=mvpQuestions;
 const generate=p=>p.type==='mvp'?generateMvp(p):generateLegacy(p);
 const checklist=p=>p.type==='mvp'?['Review the build brief','Copy the pack to your coding agent','Build and test your MVP','Save the code in GitHub','Import your MVP and understand its code'].map(text=>({text,done:false})):legacyChecklist(p);
@@ -35,8 +35,8 @@ const experience=installLearningExperience({app,header,esc,toast,getActive:()=>a
 const studio=createStudio({app,header,esc,toast,getProjects:()=>projects,getActive:()=>active,storageOK:()=>storageOK});
 const originalSave=save;
 let cloud;
-const snapshots=new Map(projects.map(p=>[p.id,JSON.stringify([p.answers,p.output,p.tasks,p.pitch,p.repositoryId])]));
-save=()=>{for(const p of projects){const value=JSON.stringify([p.answers,p.output,p.tasks,p.pitch,p.repositoryId]);if(snapshots.get(p.id)!==value){p.updated=Date.now();snapshots.set(p.id,value);}}if(cloud?.isAuthenticated()){cloud.queueSave(projects);return true;}return originalSave();};
+const snapshots=new Map(projects.map(p=>[p.id,JSON.stringify([p.answers,p.briefDepth,p.detailAnswers,p.output,p.tasks,p.pitch,p.repositoryId])]));
+save=()=>{for(const p of projects){const value=JSON.stringify([p.answers,p.briefDepth,p.detailAnswers,p.output,p.tasks,p.pitch,p.repositoryId]);if(snapshots.get(p.id)!==value){p.updated=Date.now();snapshots.set(p.id,value);}}if(cloud?.isAuthenticated()){cloud.queueSave(projects);return true;}return originalSave();};
 cloud=createCloud({app,header,esc,toast,getProjects:()=>projects,setProjects:data=>{projects=data;active=null;},getActive:()=>active,save:()=>save(),renderCurrent:()=>route(),onDemo:data=>experience.setDemo(data)});
 const pitch=createPitch({app,header,esc,toast,getProjects:()=>projects,save:()=>save(),cloud});
 const projectLoop=createProjectLoop({app,esc,toast,getActive:()=>active,save:()=>save(),cloud});
@@ -45,7 +45,44 @@ home=()=>{gui.home();cloud.nav();pitch.nav();};
 const originalEditor=editor;
 editor=()=>{originalEditor();experience.enhanceEditor();studio.details();cloud.briefTools();pitch.enhanceEditor(active);projectLoop.enhance();cloud.nav();pitch.nav();};
 const originalBuilder=builder;
-builder=()=>{questions=active.type==='mvp'?mvpQuestions:legacyQuestions;originalBuilder();if(active.type==='mvp')app.querySelector('.builder-sidebar>.eyebrow').textContent='MVP BRIEF BUILDER';cloud.nav();};
+builder=()=>{
+ questions=active.type==='mvp'?mvpQuestions:legacyQuestions;
+ if(active.type==='mvp'&&step===5&&active.briefDepth==='detailed'){
+  active.detailAnswers ||= {};
+  app.innerHTML=`${header(true)}<main class="builder-layout wrap detailed-brief-layout"><aside class="builder-sidebar"><a class="back-link" href="#dashboard">← All projects</a><div class="eyebrow">MVP BRIEF BUILDER</div><h2>Make the important details clear.</h2><p>The five foundation questions are complete. Answer what you know; anything skipped becomes an open decision.</p></aside><section class="question-panel"><div class="question-top"><span>DETAILS · OPTIONAL</span><span id="save-state">Saved on this device</span></div><div class="progress-track"><div style="width:100%"></div></div><div class="question-main"><span class="big-coach">✳</span><h1>Add useful detail.</h1><p>Your answers appear in the brief; unanswered topics stay open decisions. You can review everything before sharing.</p><div class="brief-detail-fields">${detailQuestions.map(q=>`<label><strong>${esc(q.label)}</strong><span>${esc(q.question)}</span><textarea data-detail-answer="${q.id}" rows="3" maxlength="5000" placeholder="${esc(q.placeholder)}">${esc(active.detailAnswers[q.id]||'')}</textarea></label>`).join('')}</div><div class="question-actions"><button class="button ghost" data-detail-back>← Back</button><button class="button orange" data-detail-create>${active.output?'Replace current brief with updated draft ↗':'Create detailed brief ↗'}</button></div></div></section></main>`;
+  cloud.nav();return;
+ }
+ originalBuilder();
+ if(active.type==='mvp'){
+  app.querySelector('.builder-sidebar>.eyebrow').textContent='MVP BRIEF BUILDER';
+  app.querySelector('.sidebar-bottom p').textContent='Your brief starts with your answers. Optional AI coaching is available later when your server model is ready.';
+  app.querySelector('.question-main').insertAdjacentHTML('afterbegin',`<fieldset class="brief-depth-choice"><legend>How much detail do you want in your brief?</legend><label><input type="radio" name="brief-depth" value="normal" ${active.briefDepth!=='detailed'?'checked':''}><strong>Normal</strong><span>Five essential questions</span></label><label><input type="radio" name="brief-depth" value="detailed" ${active.briefDepth==='detailed'?'checked':''}><strong>Detailed</strong><span>Five essentials, then six optional follow-ups</span></label></fieldset>`);
+  if(active.briefDepth==='detailed'&&step===4)app.querySelector('[data-action="next"]').innerHTML='Continue to details ↗';
+ }
+ cloud.nav();
+};
+document.addEventListener('change',e=>{if(e.target.name==='brief-depth'&&active?.type==='mvp'){active.briefDepth=e.target.value;save();builder();if(active.output)toast('Your approved document is unchanged. Complete the questions to replace it with a new draft.');}});
+document.addEventListener('input',e=>{if(e.target.dataset.detailAnswer&&active?.type==='mvp'){active.detailAnswers ||= {};active.detailAnswers[e.target.dataset.detailAnswer]=e.target.value;save();const status=app.querySelector('#save-state');if(status)status.textContent=cloud?.isAuthenticated()?'Account sync — see navigation status':'Saved on this device';}});
+document.addEventListener('click',e=>{
+ const button=e.target.closest('button');if(!button||active?.type!=='mvp')return;
+ if(button.dataset.action==='next'&&step===4&&active.briefDepth==='detailed'){
+  e.stopImmediatePropagation();const input=app.querySelector('#answer'),value=input?.value.trim()||'';
+  if(value.length<8){app.querySelector('#answer-error').textContent='Add at least 8 characters before continuing.';input.focus();return;}
+  active.answers[4]=value;const missing=active.answers.findIndex(a=>a.trim().length<8);if(missing>=0){step=missing;builder();toast('Complete each foundation question first.');return;}
+  step=5;save();builder();return;
+ }
+ if(button.dataset.action==='next'&&step===4&&active.output&&active.briefDepth!=='detailed'){
+  e.stopImmediatePropagation();const input=app.querySelector('#answer'),value=input?.value.trim()||'';
+  if(value.length<8){app.querySelector('#answer-error').textContent='Add at least 8 characters before continuing.';input.focus();return;}
+  active.answers[4]=value;if(active.answers.some(a=>a.trim().length<8)){toast('Complete each foundation question before replacing your brief.');return;}
+  if(!window.confirm('Replace your current edited brief with a fresh draft from these answers? Copy or download the existing brief first if you want to keep it.'))return;
+  active.output=generate(active);save();editor();return;
+ }
+ if(button.hasAttribute('data-detail-back')){e.stopImmediatePropagation();step=4;builder();return;}
+ if(button.hasAttribute('data-detail-create')){e.stopImmediatePropagation();if(active.output&&!window.confirm('Replace your current edited brief with a fresh draft from these answers? Copy or download the existing brief first if you want to keep it.'))return;const fresh=!active.output;active.output=generate(active);if(fresh)active.tasks=checklist(active);save();editor();}
+},true);
+const originalProject=project;
+project=id=>{originalProject(id);if(active?.id===id&&!active.output&&active.type==='mvp'&&active.briefDepth==='detailed'&&active.answers.every(a=>a.trim().length>=8)){step=5;builder();}};
 const originalRenderProjects=renderProjects;
 renderProjects=()=>{originalRenderProjects();app.querySelectorAll('.project-card').forEach(card=>{const p=projects.find(p=>card.hash==='#project/'+p.id);if(p?.type==='mvp')card.querySelector('p').textContent='MVP build brief';});};
 dashboard=()=>{studio.dashboard();cloud.nav();pitch.nav();};
