@@ -33,6 +33,10 @@ test('prompt compiler requires authentication, validates input and makes no gene
  assert.equal((await user.request('/api/prompt/compile','POST',{source:' '})).status,400);
  assert.equal((await user.request('/api/prompt/compile','POST',{source:'a'.repeat(30001)})).status,400);
  assert.equal((await user.request('/api/prompt/compile','POST',{source:'brief',target:'other'})).status,400);
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:'brief',allowExperimental:'yes'})).status,400);
+ const repeated='Only owners can cancel.\n'.repeat(50);
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:repeated})).value.format,'original');
+ assert.equal((await user.request('/api/prompt/compile','POST',{source:repeated,allowExperimental:true})).value.format,'dictionary');
  assert.equal((await user.request('/api/prompt/compile','POST',{source:'brief'},{'X-CSRF-Token':'wrong'})).status,403);
 });
 

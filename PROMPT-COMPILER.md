@@ -1,25 +1,56 @@
-# Lossless builder-prompt compiler
+# Builder prompt compiler v2
 
-The compiler is code, not a generative agent. On explicit **Compare encodings**, it compares the exact original Markdown, a compact JSON line array, and a line dictionary with ordered references. It never paraphrases, drops requirements, truncates, changes code, or removes negations. Every candidate must reconstruct the original JavaScript string exactly. Decoder instructions and dictionary overhead are included in the token count. Ties keep the original.
+Click **Optimize builder prompt** in Build or the builder-instructions dialog. The compiler compares the original against a compact, readable version of Apexelerate's reviewed builder template. It uses code and real token counts; it makes no generative AI call during compilation.
 
-Sign-in, CSRF/origin checks, a 30,000-character limit, and a per-account rate limit protect `POST /api/prompt/compile`. Results are not saved to projects or substituted into the readable brief. **Use original** restores the baseline. Editing the brief/task invalidates results; stale async results cannot overwrite newer text.
+The user-approved brief stays character-for-character intact, including whitespace, numbers, permissions, negations and code. Only a recognized Apexelerate wrapper is rewritten. The compact wrapper preserves the reviewed scope, architecture, learning, security, testing and documentation instructions. Its original source is recoverable through the reviewed template mapping. This verifies text preservation and provenance; it does not prove equal behavior from a coding model.
 
-## Counters
+`public/builder-template-snapshots.js` pins the reviewed source wrappers. A future template change or a custom wrapper falls back to the original until reviewed. Test/change prompts are left alone. Dictionary and JSON encodings require the advanced experimental checkbox; dictionary candidates are generated only when lines repeat. Decoder instructions and encoding overhead are included in counts.
 
-- **reference-o200k:** real local `js-tiktoken` o200k_base tokenization. No generation or remote model call. This is a reference encoding count, NOT a Gemini or Claude count and NOT a full chat-session bill.
-- **gemini:** the configured Gemini model's `countTokens` endpoint. Sends the prompt to Google only after the user selects this option and clicks Compare; credentials remain server-side. Counts all candidate text, not coding-agent tool definitions, conversation, output, or retries. No generateContent call.
-- Counts are never substituted with characters/4. Counter errors retain the original. Existing legacy estimates elsewhere remain explicitly labeled estimates.
+The selected candidate must save at least **8 tokens and 2%** versus the original. Ties and smaller gains keep the original. If any count fails, the UI retains the original. **Use original** restores it. Editing a prompt, regenerating a task or changing options invalidates previous results. Stale success and error responses cannot overwrite newer text.
 
-## What the guarantee does and does not mean
+## Counters and access
 
-Exact string recovery is mechanically verified. That is NOT proof that a target model will obey an unfamiliar encoding equally well. Encoded candidates remain experimental until model-comprehension and end-to-end build tests pass. The UI discloses this and provides original fallback. Unique short prompts usually keep the original; repeated long lines are the main opportunity in v1. No blanket savings percentage is advertised. JSON encodings here are not called TOON; a TOON adapter would require its own parser and tests.
+- **Local o200k reference:** actual `js-tiktoken` o200k_base counting, including literal special-token spellings in code. No network or model call. It is a reference count, not the target Gemini/Claude model's count or a whole coding-session bill.
+- **Configured Gemini:** explicitly selecting it sends candidate text to Google's `countTokens` API. Keys remain server-side. It does not generate an answer. Model-specific counts still exclude coding-tool schemas, output, conversation, retries and other overhead.
 
-## Optional DSPy experiment
+`POST /api/prompt/compile` requires sign-in, origin/CSRF validation, a non-empty source no longer than 30,000 characters and a per-account rate limit. Experimental mode accepts a boolean only. Compiler results do not replace saved briefs. The browser regenerates trusted candidates and checks response text, metadata and count consistency before applying a result. The optional comparison is separate from older character-based estimates elsewhere in the app.
 
-The production path has no DSPy dependency, training, or per-user generation calls. `scripts/evaluate-prompt-compiler.py` provides an offline GEPA experiment for exact decoding. Install its separate requirements in an isolated Python environment if desired. Create JSONL rows containing synthetic `source` and corresponding compiler `encoded` text, with at least four diverse examples.
+## Reproduce the free benchmark
 
-Run `python scripts/evaluate-prompt-compiler.py --dataset <fixture.jsonl>` for a zero-model-call dry run. Add `--run-model-eval --model <provider/model> --reflection-model <provider/model>` only when explicitly authorizing provider calls and configuring credentials through environment variables. Optimization may cost money. Never use real user prompts without consent. Outputs are candidate decoder instructions only, never automatically imported into the application.
+```sh
+node scripts/benchmark-prompt-compiler.mjs
+npm test
+```
 
-This harness tests exact decoding, not real MVP success. Its validation data is used for selection and is not an unbiased final test. Before promoting an encoding/template, evaluate a separate held-out set with repeated paired builds, identical starting repositories/tools/model settings, requirement and security tests, failure cases, total usage and retries. Include optimizer cost. Reject candidates with lower build quality even if input counts are smaller. No model-based experiment was run during implementation.
+The bundled synthetic corpus has six project types in guided and concise styles. It covers access restrictions, budgets, upload sizes, consent, Malaysian localization, Unicode and exact code contracts. It excludes repeated-line stress fixtures from the headline result.
 
-Implementation verification: 41 Node tests passed, including API authentication/CSRF, tokenizer counts, multilingual/code round trips, fallback, restored originals, tampered responses and stale requests. A synthetic ordinary builder prompt measured 502 → 502 o200k_base tokens (original retained). A deliberately repetitive 50-line fixture measured 550 → 159; this is a compression test, not representative build savings. Python is not installed in the implementation environment, so the optional DSPy script has not been executed or validated against an installed DSPy version.
+Local o200k_base results: **3,612 → 3,000 input tokens across 12 prompts (16.9% aggregate reduction)**. The six guided prompts save **25.4–26.8%**. Already-concise prompts keep their original text because their gains fall below the threshold. Three additional custom/modified/test-task cases keep the original. These numbers describe this small synthetic corpus; they are not a guarantee for all projects, target tokenizers or total build cost.
+
+## Optional DSPy comprehension checks
+
+The production compiler does not depend on Python or DSPy. The optional evaluator uses pinned `dspy==3.4.1` to compare the original and compiled prompts on the same requirement questions, using one explicitly selected model. It tests permissions, exact numeric limits, consent, time zones, code constraints and the wrapper's security/documentation obligations. Answers are checked against independent gold answers without an extra LLM judge. It alternates original/candidate order and reports both pass rates, individual regressions and candidate failures. Every candidate answer must pass its probe to pass this comprehension gate.
+
+The earlier GEPA experiment optimized exact text decoding. That objective did not establish builder quality, so it has been replaced with paired comprehension evaluation. No DSPy-trained prompt is automatically deployed. GEPA tuning should only be added once an end-to-end build metric and a separate held-out project set exist.
+
+Run with Python 3.10+ and Node 24:
+
+```sh
+python scripts/test-prompt-evaluator.py
+python scripts/evaluate-prompt-compiler.py
+```
+
+The default dry run generates **48 probes from six synthetic projects**, validates the dataset and makes **zero model calls**. It requires neither DSPy nor credentials. An optional `--dataset path.json` accepts a non-empty JSON array with unique `id`, `group`, `source`, `candidate`, `question` and `answer` strings. Use only synthetic or consented data. The included fixtures are development probes, not an unbiased held-out build benchmark.
+
+Implementation verification: **49 application tests and 9 Python evaluator tests passed**. The Python checks include the installed DSPy 3.4.1 adapter parsing a mocked response and enforcing its invocation limit during adapter fallback, with socket connections blocked. To repeat those two framework checks after installing the optional dependency, run `python scripts/test-prompt-evaluator.py --with-dspy`. No live inference was used.
+
+On this Windows workspace, an isolated, signed Python 3.13.9 runtime and DSPy installation are available under the ignored `tmp/python-eval/` folder. Use `.\tmp\python-eval\python.exe` in place of `python` for these commands. This temporary runtime is not committed or deployed; it does not change system Python. Regenerate it or use your own isolated environment on another computer.
+
+Only after explicitly approving model costs, install `scripts/prompt-eval-requirements.txt` in an isolated Python environment, configure the chosen provider's credentials through its environment variables, and run:
+
+```sh
+python scripts/evaluate-prompt-compiler.py --run-model-eval --model PROVIDER/MODEL --max-model-calls 96
+```
+
+The bundled set requires at least 96 LM invocations. The guard includes adapter fallback calls; provider retries are disabled. The invocation limit is not a monetary cap. Responses have a 128-token output limit. Provider usage is reported when available. A provider, parser or budget error reports an incomplete evaluation; it cannot pass the quality gate. The tool never changes templates or deploys code.
+
+Comprehension results do not demonstrate a working MVP. Before claiming equivalent build quality or total savings, run repeated paired builds from identical repositories with the same tools/model settings. Check project acceptance and security tests, failures, mobile behavior, total input/output/thinking tokens, retries and cost. Keep a separate held-out project set for the final assessment. Live model evaluation remains deferred under the user's **no paid calls** constraint.

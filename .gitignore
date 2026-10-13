@@ -6,3 +6,5 @@ data/
 !.env.example
 npm-debug.log*
 .vercel/
+__pycache__/
+.venv/

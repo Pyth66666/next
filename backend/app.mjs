@@ -54,7 +54,8 @@ export function createApplication(options={}){
  if(path==='/api/prompt/compile'&&method==='POST'){
   await rate(`compile:${user}`,10,600000);const b=await body(req);
   if(typeof b.source!=='string'||!b.source.trim()||b.source.length>30000)throw new ApiError(400,'Use a non-empty prompt of at most 30,000 characters.');
-  return json(res,200,await compileForTarget(b.source,choose(b.target,['reference-o200k','gemini'],'reference-o200k'),config,options.fetcher||fetch));
+  if(b.allowExperimental!==undefined&&typeof b.allowExperimental!=='boolean')throw new ApiError(400,'Experimental comparison must be true or false.');
+  return json(res,200,await compileForTarget(b.source,choose(b.target,['reference-o200k','gemini'],'reference-o200k'),config,options.fetcher||fetch,{allowExperimental:b.allowExperimental===true}));
  }
  if(path==='/api/admin/demo'&&method==='GET'){if(!isAdmin(user))throw new ApiError(403,'Administrator access required.');return json(res,200,{sampleFiles,lessons,repairPrompt,extensions});}
  if(path==='/api/auth/logout'&&method==='POST'){(await db.prepare('DELETE FROM sessions WHERE id=?').run(s.id));cookie(res,'',0);return json(res,200,{ok:true});}

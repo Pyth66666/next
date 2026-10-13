@@ -1,2 +1,2 @@
 # Optional offline environment only; not installed by the web application.
-dspy>=3.0,<4
+dspy==3.4.1
