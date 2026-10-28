@@ -74,5 +74,102 @@ export function klSunset(){
 
 // A single small flower as a standalone SVG, for accents beside headings and in the closing band.
 export function hibiscusMark(id,size=56){
- return `<svg class="hibiscus-mark" width="${size}" height="${size}" viewBox="-90 -90 180 180" aria-hidden="true" focusable="false">${hibiscus(id)}</svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="hibiscus-mark" width="${size}" height="${size}" viewBox="-90 -90 180 180" aria-hidden="true" focusable="false">${hibiscus(id)}</svg>`;
+}
+
+// ---------- Malaysian motifs, drawn for Apexelerate (each fits a 200x200 box) ----------
+const svg=(body,{size=120,label='',cls='motif'}={})=>`<svg xmlns="http://www.w3.org/2000/svg" class="${cls}" width="${size}" height="${size}" viewBox="0 0 200 200" ${label?`role="img" aria-label="${label}"`:'aria-hidden="true" focusable="false"'}>${body}</svg>`;
+
+// Wau bulan: the moon kite. An idea taking flight.
+export function wau(opts={}){
+ const {wing='#d7263d',inner='#ffc933',dark='#1f2466',accent='#0f766e',tail=true}=opts;
+ return svg(`<g stroke="${dark}" stroke-width="3" stroke-linejoin="round">
+  <path d="M100 38 C70 36 30 44 6 72 C30 80 62 94 100 106 C138 94 170 80 194 72 C170 44 130 36 100 38Z" fill="${wing}"/>
+  <path d="M100 52 C78 52 50 58 34 72 C54 78 76 88 100 96 C124 88 146 78 166 72 C150 58 122 52 100 52Z" fill="${inner}" stroke-width="2"/>
+  <path d="M60 66 Q80 72 100 82 Q120 72 140 66" fill="none" stroke="${wing}" stroke-width="3"/>
+  <path d="M88 106 Q100 114 112 106 L108 124 Q100 128 92 124Z" fill="${accent}"/>
+  <path d="M28 126 C48 184 152 184 172 126 C150 152 122 162 100 160 C78 162 50 152 28 126Z" fill="${wing}"/>
+  <path d="M52 140 C70 164 130 164 148 140" fill="none" stroke="${inner}" stroke-width="4"/>
+  <path d="M92 38 L100 12 L108 38Z" fill="${accent}"/>
+  <line x1="100" y1="12" x2="100" y2="172" stroke-width="3"/>
+ </g>
+ <circle cx="100" cy="74" r="7" fill="${dark}"/><circle cx="100" cy="74" r="3" fill="${inner}"/>
+ <circle cx="44" cy="70" r="3.5" fill="${dark}"/><circle cx="156" cy="70" r="3.5" fill="${dark}"/>
+ ${tail?`<path d="M100 172 C96 184 106 190 100 200" fill="none" stroke="${dark}" stroke-width="2" stroke-dasharray="4 4"/>`:''}`,opts);
+}
+
+// Ketupat: woven palm-leaf casing. Things woven together.
+export function ketupat(opts={}){
+ const {a='#2f9e6a',b='#1d7a4f',line='#0d4f33'}=opts;
+ const cells=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)cells.push(`<rect x="${-48+c*24}" y="${-48+r*24}" width="24" height="24" fill="${(r+c)%2?a:b}"/>`);
+ const weave=[];for(let i=1;i<4;i++){weave.push(`<line x1="${-48+i*24}" y1="-48" x2="${-48+i*24}" y2="48"/>`,`<line x1="-48" y1="${-48+i*24}" x2="48" y2="${-48+i*24}"/>`);}
+ const stitches=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)stitches.push(`<path d="M${-44+c*24} ${-36+r*24} q8-6 16 0" />`);
+ return svg(`<path d="M100 40 C110 22 126 14 146 12 M100 40 C96 20 104 8 120 2" fill="none" stroke="${a}" stroke-width="7" stroke-linecap="round"/>
+ <g transform="translate(100 108) rotate(45)"><rect x="-50" y="-50" width="100" height="100" rx="10" fill="${line}"/>${cells.join('')}<g stroke="${line}" stroke-width="2">${weave.join('')}</g><g stroke="#ffffff" stroke-opacity=".35" stroke-width="2" fill="none">${stitches.join('')}</g></g>`,opts);
+}
+
+// Tanglung: a paper lantern. Lighting the way.
+export function tanglung(opts={}){
+ const {body='#d7263d',gold='#ffc933',dark='#8d1024'}=opts;
+ return svg(`<line x1="100" y1="0" x2="100" y2="34" stroke="#1f2466" stroke-width="3"/>
+ <circle cx="100" cy="112" r="88" fill="${gold}" opacity=".18"/>
+ <rect x="74" y="32" width="52" height="14" rx="4" fill="${gold}" stroke="${dark}" stroke-width="2"/>
+ <ellipse cx="100" cy="106" rx="62" ry="62" fill="${body}" stroke="${dark}" stroke-width="3"/>
+ <g fill="none" stroke="${dark}" stroke-width="2" opacity=".55"><ellipse cx="100" cy="106" rx="42" ry="62"/><ellipse cx="100" cy="106" rx="20" ry="62"/></g>
+ <ellipse cx="78" cy="88" rx="10" ry="22" fill="#fff" opacity=".22"/>
+ <rect x="74" y="166" width="52" height="14" rx="4" fill="${gold}" stroke="${dark}" stroke-width="2"/>
+ <g stroke="${gold}" stroke-width="3" stroke-linecap="round"><line x1="92" y1="180" x2="90" y2="198"/><line x1="100" y1="180" x2="100" y2="200"/><line x1="108" y1="180" x2="110" y2="198"/></g>`,opts);
+}
+
+// Kompang: a frame drum played to announce good news. Telling your story.
+export function kompang(opts={}){
+ const {rim='#a3542b',skin='#f6e3b8',dark='#5b2a12'}=opts;
+ const tacks=Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2;return `<circle cx="${92+Math.cos(a)*66}" cy="${104+Math.sin(a)*72}" r="3.4" fill="#ffc933" stroke="${dark}" stroke-width="1"/>`;}).join('');
+ return svg(`<ellipse cx="100" cy="108" rx="76" ry="82" fill="${dark}"/>
+ <ellipse cx="92" cy="104" rx="76" ry="82" fill="${rim}"/>
+ <ellipse cx="92" cy="104" rx="60" ry="66" fill="${skin}" stroke="${dark}" stroke-width="2"/>
+ <path d="M70 70 Q92 58 116 70" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="4" stroke-linecap="round"/>
+ ${tacks}
+ <g fill="none" stroke-linecap="round" stroke-width="6"><path d="M172 70 Q186 104 172 138" stroke="#d7263d"/><path d="M186 54 Q206 104 186 154" stroke="#ffc933"/></g>`,opts);
+}
+
+// Kedai: a small shop front with a scalloped awning.
+export function kedai(opts={}){
+ const stripes=Array.from({length:6},(_,i)=>`<rect x="${28+i*24}" y="52" width="24" height="34" fill="${i%2?'#fff':'#d7263d'}"/>`).join('');
+ const scallops=Array.from({length:6},(_,i)=>`<path d="M${28+i*24} 86 a12 12 0 0 0 24 0Z" fill="${i%2?'#fff':'#d7263d'}" stroke="#8d1024" stroke-width="1.5"/>`).join('');
+ return svg(`<rect x="36" y="80" width="128" height="96" rx="6" fill="#ffe7b0" stroke="#1f2466" stroke-width="3"/>
+ <rect x="24" y="36" width="152" height="18" rx="6" fill="#1f2466"/><text x="100" y="50" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="700" font-size="13" fill="#ffc933" letter-spacing="2">KEDAI</text>
+ ${stripes}<rect x="28" y="52" width="144" height="34" fill="none" stroke="#8d1024" stroke-width="1.5"/>${scallops}
+ <rect x="52" y="110" width="52" height="40" rx="4" fill="#bfe6dc" stroke="#1f2466" stroke-width="3"/><line x1="78" y1="110" x2="78" y2="150" stroke="#1f2466" stroke-width="2"/>
+ <rect x="116" y="110" width="34" height="66" rx="4" fill="#0f766e" stroke="#1f2466" stroke-width="3"/><circle cx="142" cy="146" r="3" fill="#ffc933"/>
+ <circle cx="66" cy="160" r="8" fill="#d7263d"/><circle cx="84" cy="162" r="7" fill="#ffc933"/>`,opts);
+}
+
+// Buku: a stack of books with a pencil.
+export function buku(opts={}){
+ return svg(`<g stroke="#1f2466" stroke-width="3" stroke-linejoin="round">
+ <rect x="34" y="132" width="132" height="30" rx="5" fill="#0f766e"/><rect x="44" y="102" width="118" height="30" rx="5" fill="#ffc933"/><rect x="38" y="72" width="124" height="30" rx="5" fill="#d7263d"/>
+ </g><g stroke="#fff" stroke-width="3" opacity=".7"><line x1="52" y1="147" x2="150" y2="147"/><line x1="58" y1="117" x2="146" y2="117"/><line x1="52" y1="87" x2="146" y2="87"/></g>
+ <g transform="translate(118 30) rotate(35)"><rect x="0" y="0" width="14" height="70" fill="#ffc933" stroke="#1f2466" stroke-width="3"/><path d="M0 70 L7 88 L14 70Z" fill="#f6e3b8" stroke="#1f2466" stroke-width="3"/><rect x="0" y="-10" width="14" height="10" fill="#f28da0" stroke="#1f2466" stroke-width="3"/></g>`,opts);
+}
+
+// Rumah kampung: a house on stilts. Community.
+export function rumah(opts={}){
+ return svg(`<path d="M100 20 L176 92 H24Z" fill="#1f2466"/><g stroke="#1f2466" stroke-width="5" stroke-linecap="round"><line x1="100" y1="22" x2="84" y2="4"/><line x1="100" y1="22" x2="116" y2="4"/></g><path d="M100 34 L156 88 H44Z" fill="#2d3485"/>
+ <path d="M86 70 h28 v18 h-28z" fill="#ffc933" stroke="#1f2466" stroke-width="2"/>
+ <rect x="38" y="88" width="124" height="58" fill="#c98b4f" stroke="#5b2a12" stroke-width="3"/>
+ <g stroke="#a86a33" stroke-width="2">${Array.from({length:7},(_,i)=>`<line x1="${54+i*16}" y1="90" x2="${54+i*16}" y2="144"/>`).join('')}</g>
+ <rect x="56" y="102" width="26" height="26" fill="#ffe7b0" stroke="#5b2a12" stroke-width="3"/><rect x="118" y="100" width="28" height="46" fill="#7a3f1d" stroke="#5b2a12" stroke-width="3"/>
+ <g fill="#5b2a12">${[46,78,122,154].map(x=>`<rect x="${x}" y="146" width="7" height="34"/>`).join('')}</g>
+ <g stroke="#5b2a12" stroke-width="4"><line x1="124" y1="180" x2="140" y2="146"/><line x1="134" y1="180" x2="150" y2="146"/><line x1="128" y1="170" x2="138" y2="170"/><line x1="133" y1="160" x2="143" y2="160"/></g>
+ <path d="M10 182 Q100 168 190 182 V196 H10Z" fill="#2f9e6a"/>`,opts);
+}
+
+// Flying wau for the hero sky, as a standalone SVG group positioned by the caller.
+export function wauSky(){return wau({size:140,cls:'motif hero-wau'});}
+
+// CSS-ready versions of the motifs, so stylesheets can place them as decoration (url(...) values).
+export function artVariables(){
+ const url=s=>`url("data:image/svg+xml,${encodeURIComponent(s)}")`;
+ return {'--art-wau':url(wau({tail:true})),'--art-ketupat':url(ketupat()),'--art-tanglung':url(tanglung()),'--art-kompang':url(kompang()),'--art-rumah':url(rumah()),'--art-kedai':url(kedai()),'--art-buku':url(buku()),'--art-hibiscus':url(hibiscusMark('css',180)),'--art-wau-small':url(wau({tail:false}))};
 }
