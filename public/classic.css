@@ -140,3 +140,34 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--brass);outline-o
 .mobile-dock a{color:#5d5a4f!important}
 .workspace-section-title h2 span{font-family:var(--sans);font-size:13px!important}
 .journey-rail button>span{font-family:var(--sans)!important;font-size:13px!important}
+/* Round 3: accounts, recovery, uploads */
+.account-context{background:#efe9da;border-left:3px solid var(--brass);padding:12px 14px;font-size:15px!important;margin:0 0 18px!important;color:var(--ink)!important}
+.account-benefits{margin:0 0 22px;padding:0;list-style:none;display:grid;gap:6px}
+.account-benefits li{font-size:15px;color:var(--ink);padding-left:20px;position:relative}
+.account-benefits li::before{content:'';position:absolute;left:2px;top:.62em;width:8px;height:1px;background:var(--brass)}
+.forgot-link{display:inline-block;margin-top:16px;background:none;border:0;padding:0;font-size:14px!important;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#reset-form h2,.recovery-card h2,#upload-form h2{font-size:28px;margin:0 0 8px}
+.reset-help{font-size:14px!important;color:var(--muted)!important;margin-top:14px!important}
+.recovery-panel{max-width:620px}
+.recovery-code{font-family:'Courier New',monospace;font-size:clamp(22px,4vw,30px)!important;letter-spacing:.08em;color:var(--ink)!important;background:var(--paper);border:1px dashed var(--brass);padding:18px 20px;text-align:center;margin:0 0 18px!important;user-select:all;word-break:break-all}
+.recovery-confirm{display:flex!important;align-items:center;gap:10px;font-size:15px;margin:20px 0 6px;font-weight:600}
+.recovery-confirm input{width:18px;height:18px;accent-color:var(--orange)}
+.button:disabled{opacity:.45;cursor:not-allowed}
+.upload-choices{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 8px}
+.upload-choice{position:relative;display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:1px solid var(--orange);color:var(--orange);font-weight:600;font-size:14px;cursor:pointer;background:var(--surface)}
+.upload-choice:hover{background:#efe9da}
+.upload-choice:focus-within{outline:2px solid var(--brass);outline-offset:2px}
+.upload-choice input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.upload-picked{font-size:14px!important;color:var(--muted)!important;margin:4px 0 18px!important}
+#upload-form small{font-weight:400;color:var(--muted)}
+.github-option{margin:22px 0 10px;max-width:900px}
+.github-option>summary{cursor:pointer;font-size:15px;font-weight:600;padding:12px 0;color:var(--ink)}
+.github-option[open]>summary{margin-bottom:12px}
+.guest-save-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;margin:22px 0 4px;padding:16px 20px;background:#efe9da;border:1px solid var(--line);border-left:3px solid var(--burgundy);border-radius:4px}
+.guest-save-note p{margin:0;font-size:15px;line-height:1.55;max-width:560px}
+.guest-save-note div{display:flex;flex-wrap:wrap;gap:10px}
+.guest-save-note .button{padding:11px 16px;font-size:13px}
+@media(max-width:760px){.guest-save-note .button,.upload-choice{width:100%}.guest-save-note div{width:100%}}
+.part-icon{display:none!important}
+[data-learning-activity]>span:first-child{display:none}
+.upload-choices .upload-choice{margin:0!important}

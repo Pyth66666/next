@@ -188,3 +188,50 @@ test('static server does not expose configuration, storage or backend sources',a
  const home=await a.request('/');assert.equal(home.status,200);assert.match(home.value,/cloud.css/);assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
  const config=await a.request('/api/config');assert.equal(config.value.githubSecret,undefined);assert.equal(config.value.nvidiaKey,undefined);assert.equal(config.value.geminiKey,undefined);assert.equal(config.value.providerName,'Gemini');assert.equal(config.value.aiConfigured,false);
 });
+
+test('recovery code resets a password once, signs out old sessions and is required',async t=>{
+ const f=await fixture(t),user=f.client(),other=f.client();
+ const registered=await user.register('recover@example.com');
+ assert.equal(registered.status,200);
+ const code=registered.value.recoveryCode;
+ assert.match(code,/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+ assert.equal((await user.request('/api/auth/me')).value.user.email,'recover@example.com');
+ assert.equal((await other.request('/api/auth/reset','POST',{email:'recover@example.com',code:'AAAA-AAAA-AAAA-AAAA',password:'brand new password'})).status,401);
+ assert.equal((await other.request('/api/auth/reset','POST',{email:'nobody@example.com',code,password:'brand new password'})).status,401);
+ assert.equal((await other.request('/api/auth/reset','POST',{email:'recover@example.com',code,password:'short'})).status,400);
+ const reset=await other.request('/api/auth/reset','POST',{email:'Recover@Example.com',code:code.toLowerCase().replaceAll('-',' '),password:'brand new password'});
+ assert.equal(reset.status,200);
+ assert.notEqual(reset.value.recoveryCode,code,'A fresh code replaces the used one');
+ assert.equal((await user.request('/api/auth/me')).value.user,null,'Old sessions are signed out');
+ assert.equal((await other.request('/api/auth/me')).value.user.email,'recover@example.com');
+ assert.equal((await other.request('/api/auth/reset','POST',{email:'recover@example.com',code,password:'another new password'})).status,401,'Used code no longer works');
+ const fresh=f.client();
+ assert.equal((await fresh.request('/api/auth/login','POST',{email:'recover@example.com',password:'  long password  '})).status,401);
+ assert.equal((await fresh.request('/api/auth/login','POST',{email:'recover@example.com',password:'brand new password'})).status,200);
+ const replaced=await fresh.request('/api/auth/recovery-code','POST',{});
+ assert.equal(replaced.status,200);assert.notEqual(replaced.value.recoveryCode,reset.value.recoveryCode);
+ assert.equal((await f.client().request('/api/auth/recovery-code','POST',{})).status,403);
+});
+
+test('uploaded project files become a private snapshot with the same filters as GitHub imports',async t=>{
+ const f=await fixture(t),user=f.client();
+ assert.equal((await user.request('/api/repositories/upload','POST',{name:'x',files:[{path:'a.js',content:'1'}]})).status,403);
+ await user.register('upload@example.com');
+ const result=await user.request('/api/repositories/upload','POST',{name:'Cake app',totalFiles:5,files:[
+  {path:'src/app.js',content:'const api_key = "private-secret";\nexport const ok=1;'},
+  {path:'.env',content:'SECRET=1'},
+  {path:'node_modules/x/index.js',content:'x'},
+  {path:'logo.png',content:'binary'},
+  {path:'README.md',content:'# Cake app'}]});
+ assert.equal(result.status,201);
+ assert.equal(result.value.fullName,'Cake app');
+ assert.equal(result.value.source,'upload');
+ assert.deepEqual(result.value.files.map(x=>x.path).sort(),['README.md','src/app.js']);
+ assert.equal(result.value.partial,true);
+ const file=await user.request(`/api/repositories/${result.value.id}/file?path=src%2Fapp.js`);
+ assert.ok(!file.value.content.includes('private-secret'),'Secrets are redacted');
+ assert.equal((await user.request('/api/repositories/upload','POST',{name:'Bad',files:[{path:'../etc/passwd.js',content:'x'}]})).status,400);
+ assert.equal((await user.request('/api/repositories/upload','POST',{name:'Empty',files:[{path:'.env',content:'x'}]})).status,400);
+ assert.equal((await f.client().request(`/api/repositories/${result.value.id}`)).status,401);
+ const list=await user.request('/api/repositories');assert.equal(list.value.length,1);
+});

@@ -38,7 +38,7 @@ export function providers(config,fetcher=fetch){
  return {ai,github,fetcher};
 }
 export function parseJson(text){try{const s=text.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');return JSON.parse(s);}catch{throw new ApiError(502,'The model did not return the required format. Try again or choose another model.');}}
-export function eligibleFile(path,size=0){return size<=30000&&!/(^|\/)(node_modules|vendor|dist|build|coverage|\.git)(\/|$)/i.test(path)&&!/(^|\/)(\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx)|credentials(?:\..*)?|secrets(?:\..*)?|package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/i.test(path)&&/\.(js|jsx|ts|tsx|mjs|cjs|py|go|rs|java|php|rb|html|css|sql|prisma|json|md|yml|yaml|toml)$/i.test(path);}
+export {eligibleFile} from '../shared/source-files.js';
 export function redact(text){return text.replace(/AIza[A-Za-z0-9_-]{30,}/g,'[REDACTED_TOKEN]').replace(/(?:nvapi-|gh[pousr]_|github_pat_)[A-Za-z0-9_\-]{12,}/g,'[REDACTED_TOKEN]').replace(/-----BEGIN [^-]*PRIVATE KEY-----[\s\S]*?-----END [^-]*PRIVATE KEY-----/g,'[REDACTED_PRIVATE_KEY]').replace(/((?:api[_-]?key|password|secret|access[_-]?token)\s*[:=]\s*)["'][^"'\n]+["']/gi,'$1"[REDACTED]"');}
 export function contextFiles(repo,question){const terms=question.toLowerCase().match(/[a-z0-9_]{3,}/g)||[];const ranked=repo.files.map(f=>({f,score:terms.reduce((sum,t)=>sum+(f.path.toLowerCase().includes(t)?10:0)+(f.content.toLowerCase().includes(t)?1:0),0)})).sort((a,b)=>b.score-a.score);let used=0;return ranked.filter(({f})=>{if(used+f.content.length>65000)return false;used+=f.content.length;return true;}).slice(0,10).map(({f})=>f);}
 export function fileContext(files){return files.map(f=>`FILE ${f.path}\n${f.content.split('\n').map((line,i)=>`${i+1}: ${line}`).join('\n')}`).join('\n\n');}

@@ -23,7 +23,9 @@ test('website completes account, server save, real source tutor and quiz journey
  try{
   await import('../public/app.js');await until(()=>document.querySelector('[data-account-link]'));
   location.hash='repositories';await until(()=>document.querySelector('#account-form'));
-  fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));
+  fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('[data-recovery-code]'));
+  assert.match(document.querySelector('[data-recovery-code]').textContent,/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/);assert.equal(document.querySelector('[data-recovery-continue]').disabled,true,'Continue waits until the code is saved');
+  const saved=document.querySelector('[data-recovery-saved]');saved.checked=true;saved.dispatchEvent(new window.Event('change',{bubbles:true}));click('[data-recovery-continue]');await until(()=>document.querySelector('#repository-form'));assert.ok(document.querySelector('#upload-form'),'Upload is offered before GitHub');
   assert.equal(location.hash,'#repositories');assert.equal(document.querySelector('[data-admin-nav]'),null);
   location.hash='dashboard';await until(()=>document.querySelector('#studio-projects'));
   click('[data-action=new]');await until(()=>document.querySelector('[data-problem-area]'));click('[data-problem-area=business]');click('[data-action=next]');await until(()=>document.querySelector('#answer'));
