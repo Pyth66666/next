@@ -12,5 +12,13 @@ export function promptFor(project,mode='guided',phase='build',change='') {
 export function projectStage(p){if(!p.output)return 'draft';if(p.tasks.length&&p.tasks.every(t=>t.done))return 'complete';if(p.tasks.some(t=>t.done))return 'building';return 'ready';}
 export function selectProjects(projects,{query='',stage='all',type='all',sort='recent'}={}){
  const result=projects.filter(p=>(stage==='all'||projectStage(p)===stage)&&(type==='all'||p.type===type)&&[...p.answers,p.output||''].join(' ').toLowerCase().includes(query.trim().toLowerCase()));
- return result.sort((a,b)=>sort==='name'?(a.answers[0]||'').localeCompare(b.answers[0]||''):sort==='oldest'?(a.created||0)-(b.created||0):(b.updated||b.created||0)-(a.updated||a.created||0));
+ return result.sort((a,b)=>sort==='name'?projectName(a,'').localeCompare(projectName(b,'')):sort==='oldest'?(a.created||0)-(b.created||0):(b.updated||b.created||0)-(a.updated||a.created||0));
+}
+// A short, readable project name: the user's own name if set, otherwise the start of their first answer.
+export function projectName(p,fallback='Untitled project'){
+ const own=String(p?.name||'').trim();if(own)return own;
+ const first=String(p?.answers?.[0]||'').trim().split(/(?<=[.!?])\s|\n/)[0].replace(/[.!?]+$/,'');
+ if(!first)return fallback;
+ const words=first.split(/\s+/);
+ return words.length>8?words.slice(0,8).join(' ')+'…':first;
 }

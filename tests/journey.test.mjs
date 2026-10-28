@@ -25,7 +25,7 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   await import('../public/app.js');
   assert.match(window.document.querySelector('h1').textContent,/Big idea/);
   click('[data-action="new"]');await tick();
-  assert.match(window.document.querySelector('.builder-sidebar>.eyebrow').textContent,/MVP/);
+  assert.match(window.document.querySelector('.builder-sidebar>.eyebrow').textContent,/IDEA PLANNER/);
   assert.ok(window.document.querySelector('[data-problem-area="business"]'));
   click('[data-problem-area="business"]');click('[data-action="next"]');
   const answers=['A booking app for coaches','Book a session in three minutes','Customers and coaches with separate permissions','Two weeks, mobile friendly, no payments','Browse coaches; Select slot; Book session; Show confirmation'];
@@ -39,8 +39,10 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   assert.ok(window.document.querySelector('[data-prompt-method="ai"]'));
   assert.equal(window.document.querySelector('.prompt-size-details').open,false);
   assert.ok(!inlinePrompt.closest('details'),'Prompt is not collapsed');
-  assert.equal(inlineBrief.textContent,window.document.querySelector('#output').value);
-  assert.ok(inlinePrompt.value.includes(inlineBrief.textContent));
+  assert.equal(inlineBrief.dataset.source,window.document.querySelector('#output').value);
+  assert.ok(inlinePrompt.value.includes(inlineBrief.dataset.source));
+  assert.ok(inlineBrief.querySelector('h4,h5'),'Brief is shown as a readable document');
+  assert.ok(!/^#/m.test(inlineBrief.textContent),'No raw markdown markers are shown');
   assert.equal(window.document.querySelector('.inline-prompt-settings').open,false);
   assert.equal(window.document.querySelector('.brief-details').open,false);
   let copied='';Object.defineProperty(window.navigator,'clipboard',{configurable:true,value:{writeText:async text=>{copied=text;}}});
@@ -54,7 +56,7 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   click('[data-inline-copy]');await tick();assert.match(window.document.querySelector('[data-inline-feedback]').textContent,/manually/);assert.equal(window.document.activeElement,inlinePrompt);
   const edited='Edited MVP brief: add an email confirmation.';
   fill('#output',edited);
-  assert.equal(inlineBrief.textContent,edited);assert.ok(inlinePrompt.value.includes(edited));
+  assert.equal(inlineBrief.dataset.source,edited);assert.ok(inlinePrompt.value.includes(edited));
   click('[data-project-stage="plan"]');assert.equal(window.document.querySelector('#inline-build-prompt'),null);
   click('[data-project-stage="build"]');assert.ok(window.document.querySelector('#inline-build-prompt').value.includes(edited));
   click('[data-learn="pack"]');
@@ -70,7 +72,7 @@ test('public handoff uses real-code entry points; admin demonstration retains le
   click('.pack-dialog .close');
   const saved=JSON.parse(window.localStorage.getItem('apexelerate.projects.v1'));
   assert.equal(saved[0].output,edited);assert.equal(saved[0].type,'mvp');
-  await go('dashboard');assert.match(window.document.querySelector('.project-card p').textContent,/MVP build brief/);
+  await go('dashboard');assert.match(window.document.querySelector('.project-card p').textContent,/App plan/);
   fill('#studio-search','nonexistent keyword');assert.equal(window.document.querySelectorAll('.project-card').length,0);
   click('[data-studio="clear"]');assert.equal(window.document.querySelectorAll('.project-card').length,1);
   changeSelect('#studio-type','sop');assert.equal(window.document.querySelectorAll('.project-card').length,0);

@@ -1,0 +1,142 @@
+/* Classic theme: ivory paper, deep forest green, muted brass, serif headings.
+   Loaded last so it can settle typography and a few shared details on top of the older sheets. */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+:root{
+ --paper:#f6f1e6;
+ --surface:#fcfaf4;
+ --soft:#eee7d8;
+ --line:#ddd3bf;
+ --ink:#1d2520;
+ --muted:#6a6659;
+ --orange:#1f3a2c;          /* legacy name: now the primary forest green */
+ --green:#566a57;
+ --brass:#a8884f;
+ --burgundy:#7a2632;
+ --serif:'Cormorant Garamond',Garamond,'Times New Roman',serif;
+ --sans:'Source Sans 3','Segoe UI',system-ui,sans-serif;
+}
+
+body{font-family:var(--sans);font-size:16px;background:var(--paper);color:var(--ink)}
+button,input,textarea,select{font-family:var(--sans)}
+
+/* Headings: serif, calm spacing, no tight tracking */
+h1,h2,.welcome-intro h1,.workspace-heading h1,.question-main h1,.editor-heading h1,.connect-page h1,.learn-heading h1{
+ font-family:var(--serif);font-weight:600;letter-spacing:0!important;color:var(--ink)}
+h3{font-family:var(--sans);letter-spacing:0!important;font-weight:600}
+h1>span,h1 span,.workspace-heading h1 span,.welcome-intro h1 span{color:var(--burgundy)!important;font-style:italic;font-weight:500}
+.welcome-intro h1{line-height:1.02;font-size:clamp(48px,6vw,84px)}
+.question-main h1,.editor-heading h1{font-size:clamp(30px,3vw,40px);line-height:1.15}
+.start-choice h2,.project-card h2{font-size:26px;line-height:1.15}
+
+/* Labels: small caps feel, readable size */
+.eyebrow,.choice-number,.welcome-location{font-size:11px!important;letter-spacing:.18em;color:var(--brass);font-weight:600}
+.live-dot{background:var(--brass)!important}
+
+/* Body copy: no text smaller than 13px for a non-technical audience */
+.start-choice p,.welcome-intro>p,.question-main>p,.journey-rail button small,.prompt-method-options small,
+.inline-build-heading span,.storage-note,.cloud-status,.sidebar-caption{font-size:14px!important;line-height:1.6!important}
+.welcome-intro>p{font-size:18px!important;color:var(--muted)}
+
+/* Buttons: squared, quiet, confident */
+.button{border-radius:2px;letter-spacing:.04em;font-size:14px;font-weight:600}
+.button:hover:not(:disabled){transform:none}
+.button.orange{background:var(--orange);color:#f6f1e6;border-color:var(--orange)}
+.button.orange:hover:not(:disabled){background:#152a1f}
+.button.light{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.button.light:hover:not(:disabled){border-color:var(--ink)}
+
+/* Cards and panels: thin rules, small radius, no heavy shadows */
+.start-choice,.project-card,.inline-build-card,.prompt-method-options button,[data-problem-area],
+.empty-state,.connection-card,.account-card,.pitch-project-card{border-radius:4px!important;box-shadow:none!important}
+.start-choice{background:var(--surface);border-color:var(--line)}
+.start-choice:hover{transform:none;border-color:var(--brass);box-shadow:none}
+.start-choice.choice-idea{background:var(--orange);border-color:var(--orange);color:#f3ecdc}
+.start-choice.choice-idea h2,.start-choice.choice-idea .choice-bottom{color:#f6f1e6}
+.start-choice.choice-idea p{color:#cfd3c6}
+.start-choice.choice-idea .choice-bottom{border-top-color:#ffffff26}
+.choice-icon{width:auto!important;height:auto!important;background:none!important;border-radius:0!important;
+ font-family:var(--serif);font-size:34px!important;font-style:italic;color:var(--brass)!important}
+.choice-number{display:none}
+
+/* Inputs */
+input,textarea,select{border-radius:2px!important}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--brass);outline-offset:1px}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+/* Navigation: words, not symbols */
+.guided-nav{background:#ece5d5!important}
+.guided-nav .brand{color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em!important;font-size:28px}
+.guided-nav .mark,.mark{background:var(--orange)!important}
+.brand-dot{color:var(--brass)!important}
+.sidebar-caption{color:var(--muted)!important;letter-spacing:.12em;font-size:10px!important;text-transform:uppercase}
+.guided-nav nav>a>span:first-child,.mobile-dock a>span:first-child{display:none}
+.guided-nav nav>a{font-size:16px!important;border-radius:0!important;padding:12px 16px!important;border-left:2px solid transparent;color:#5d5a4f}
+.guided-nav nav>a:hover{background:transparent!important;color:var(--ink)}
+.guided-nav nav>a.active{background:transparent!important;box-shadow:none!important;border-left-color:var(--brass);color:var(--ink);font-weight:600}
+.sidebar-mini-mark,.welcome-spark{display:none!important}
+.mobile-dock a{font-size:13px!important;font-weight:600}
+.mobile-dock a.active{background:transparent!important;color:var(--orange)!important;box-shadow:inset 0 -2px 0 var(--brass)}
+
+/* Problem-area cards: drop the decorative symbols */
+[data-problem-area]>span:first-child{display:none}
+[data-problem-area].selected{border-color:var(--orange)!important;background:#efe9da!important;box-shadow:inset 0 0 0 1px var(--orange)!important}
+
+/* Journey steps */
+.journey-rail button>span{border-color:var(--line)!important;font-family:var(--serif);font-size:15px!important}
+.journey-rail button[aria-current=step]>span{background:var(--orange)!important;color:#f6f1e6!important}
+.journey-rail button[aria-current=step]::after{background:var(--brass)!important;height:2px!important}
+
+/* The brief, rendered as a readable document */
+.inline-build-brief.brief-doc{white-space:normal;font-family:var(--sans);font-size:15px;line-height:1.65;overflow:auto;background:var(--surface)}
+.brief-doc h4{font-family:var(--serif);font-size:24px;font-weight:600;margin:0 0 6px;line-height:1.2}
+.brief-doc h5{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin:20px 0 6px;font-weight:700}
+.brief-doc p{margin:0 0 8px}
+.brief-doc ul{margin:0 0 8px;padding-left:20px}
+.brief-doc li{margin:2px 0}
+
+/* Messages */
+.error,#pitch-color-warning{color:var(--burgundy)!important}
+.pitch-preview-warning{color:#5a3b1e!important;background:#f1e7d1!important}
+#toast{border-radius:2px}
+
+@media(max-width:760px){
+ .welcome-intro h1{font-size:46px}
+ .start-choice h2{font-size:24px}
+ .guided-nav .brand{font-size:24px}
+}
+
+/* Readability and finishing touches */
+#inline-build-prompt,textarea{font-family:var(--sans)!important}
+.prompt-method-options button>span{font-size:12px!important;letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
+.choice-bottom,.welcome-footer p,.text-link,.gui-details>summary,.how-disclosure summary{font-size:14px!important}
+.welcome-footer>span{font-size:11px!important;letter-spacing:.16em;color:var(--brass)}
+.welcome-location{letter-spacing:.04em!important;color:var(--muted)!important;font-weight:400!important}
+.guided-nav .nav-toggle{border-radius:2px!important;background:transparent!important;border:1px solid var(--line)!important}
+.mobile-dock a{border-radius:0!important}
+.journey-rail button strong{font-size:15px!important}
+[class*=card]:not(.deck-canvas),.pitch-project-card button,.pitch-track-link{border-radius:4px!important}
+/* Round 2: user-flow improvements */
+.next-steps-guide{margin:28px 0 8px;padding:26px 28px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:4px}
+.next-steps-guide h3{font-family:var(--serif);font-size:28px;font-weight:600;margin:6px 0 14px}
+.next-steps-guide ol{margin:0;padding-left:22px;display:grid;gap:12px;max-width:760px}
+.next-steps-guide li{font-size:15px;line-height:1.6;color:var(--ink);padding-left:4px}
+.next-steps-guide li::marker{font-family:var(--serif);font-weight:700;color:var(--brass)}
+.next-steps-guide em{font-style:normal;font-weight:600}
+#inline-build-prompt{height:260px!important}
+.rename-link{background:none;border:0;padding:0;margin:0 0 10px;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.rename-link:hover{color:var(--ink)}
+.rename-form{margin:14px 0 12px;max-width:620px}
+.rename-form label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.rename-form div{display:flex;gap:10px}
+.rename-form input{flex:1;min-width:0;font-family:var(--serif);font-size:26px;padding:8px 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.filter-toolbar.few-projects,.filter-toolbar.few-projects+.filter-summary{display:none}
+.template-icon{display:none}
+.project-progress span,.project-card-foot span,.mini-project-path span{font-size:13px!important}
+/* Text contrast: brass is decorative; text uses a darker gold that passes WCAG AA on ivory */
+:root{--brass-text:#7f6232}
+.eyebrow,.choice-number,.next-steps-guide .eyebrow,.prompt-method-options button>span,.welcome-footer>span,.brief-doc h5,.sidebar-caption{color:var(--brass-text)!important}
+.guided-nav nav>a{color:#4f4c43}
+.mobile-dock a{color:#5d5a4f!important}
+.workspace-section-title h2 span{font-family:var(--sans);font-size:13px!important}
+.journey-rail button>span{font-family:var(--sans)!important;font-size:13px!important}
