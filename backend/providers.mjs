@@ -35,7 +35,9 @@ export function providers(config,fetcher=fetch){
  const ai=config.provider==='nvidia'?nvidia:config.provider==='gemini'?gemini:async()=>{throw new ApiError(503,'AI provider configuration needs attention. Account and manual tools remain available.');};
 
  async function github(path,token){return jsonFetch(`https://api.github.com${path}`,{headers:{Accept:'application/vnd.github+json','User-Agent':'Apexelerate','X-GitHub-Api-Version':'2022-11-28',...(token?{Authorization:`Bearer ${token}`}:{})}},fetcher);}
- return {ai,github,fetcher};
+ // Transactional email through Resend (https://resend.com/docs/api-reference/emails/send-email).
+ async function sendEmail({to,subject,html,text}){if(!config.resendKey||!config.emailFrom)throw new ApiError(503,'Email is not configured on the server.');return jsonFetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${config.resendKey}`,'Content-Type':'application/json'},body:JSON.stringify({from:config.emailFrom,to:[to],subject,html,text})},fetcher,20000);}
+ return {ai,github,sendEmail,fetcher};
 }
 export function parseJson(text){try{const s=text.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');return JSON.parse(s);}catch{throw new ApiError(502,'The model did not return the required format. Try again or choose another model.');}}
 export {eligibleFile} from '../shared/source-files.js';

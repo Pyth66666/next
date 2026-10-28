@@ -189,28 +189,42 @@ test('static server does not expose configuration, storage or backend sources',a
  const config=await a.request('/api/config');assert.equal(config.value.githubSecret,undefined);assert.equal(config.value.nvidiaKey,undefined);assert.equal(config.value.geminiKey,undefined);assert.equal(config.value.providerName,'Gemini');assert.equal(config.value.aiConfigured,false);
 });
 
-test('recovery code resets a password once, signs out old sessions and is required',async t=>{
- const f=await fixture(t),user=f.client(),other=f.client();
- const registered=await user.register('recover@example.com');
- assert.equal(registered.status,200);
- const code=registered.value.recoveryCode;
- assert.match(code,/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
- assert.equal((await user.request('/api/auth/me')).value.user.email,'recover@example.com');
- assert.equal((await other.request('/api/auth/reset','POST',{email:'recover@example.com',code:'AAAA-AAAA-AAAA-AAAA',password:'brand new password'})).status,401);
- assert.equal((await other.request('/api/auth/reset','POST',{email:'nobody@example.com',code,password:'brand new password'})).status,401);
- assert.equal((await other.request('/api/auth/reset','POST',{email:'recover@example.com',code,password:'short'})).status,400);
- const reset=await other.request('/api/auth/reset','POST',{email:'Recover@Example.com',code:code.toLowerCase().replaceAll('-',' '),password:'brand new password'});
- assert.equal(reset.status,200);
- assert.notEqual(reset.value.recoveryCode,code,'A fresh code replaces the used one');
- assert.equal((await user.request('/api/auth/me')).value.user,null,'Old sessions are signed out');
- assert.equal((await other.request('/api/auth/me')).value.user.email,'recover@example.com');
- assert.equal((await other.request('/api/auth/reset','POST',{email:'recover@example.com',code,password:'another new password'})).status,401,'Used code no longer works');
- const fresh=f.client();
- assert.equal((await fresh.request('/api/auth/login','POST',{email:'recover@example.com',password:'  long password  '})).status,401);
- assert.equal((await fresh.request('/api/auth/login','POST',{email:'recover@example.com',password:'brand new password'})).status,200);
- const replaced=await fresh.request('/api/auth/recovery-code','POST',{});
- assert.equal(replaced.status,200);assert.notEqual(replaced.value.recoveryCode,reset.value.recoveryCode);
- assert.equal((await f.client().request('/api/auth/recovery-code','POST',{})).status,403);
+test('email reset link changes the password once, signs out old sessions and never reveals who has an account',async t=>{
+ const dataDir=mkdtempSync(join(tmpdir(),'apex-reset-')),sent=[];
+ const service={async ai(){throw new Error('unused');},async github(){throw new Error('unused');},async sendEmail(message){sent.push(message);return {id:'email-1'};}};
+ const config={...configuration({}),dataDir,port:0,resendKey:'re_test',emailFrom:'Apexelerate <hello@example.com>'};
+ const app=createApplication({config,providers:service});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${app.server.address().port}`;
+ t.after(async()=>{await new Promise(r=>app.server.close(r));app.store.db.close();rmSync(dataDir,{recursive:true,force:true});});
+ const client=()=>{let cookie='',csrf='';return {async request(path,method='GET',data){const r=await fetch(base+path,{method,headers:{Origin:config.origin,...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{}),...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];const value=await r.json().catch(()=>null);if(value?.csrf)csrf=value.csrf;return {status:r.status,value};}};};
+ const owner=client(),stranger=client();
+ assert.equal((await owner.request('/api/auth/register','POST',{email:'reset@example.com',password:'first password here'})).status,200);
+ assert.equal((await stranger.request('/api/config')).value.emailConfigured,true);
+ const unknown=await stranger.request('/api/auth/forgot','POST',{email:'nobody@example.com'});
+ assert.equal(unknown.status,200);assert.equal(sent.length,0,'No email for an unknown address');
+ const known=await stranger.request('/api/auth/forgot','POST',{email:'Reset@Example.com'});
+ assert.deepEqual(known.value,unknown.value,'Same answer either way');
+ assert.equal(sent.length,1);assert.equal(sent[0].to,'reset@example.com');
+ const token=sent[0].text.match(/#reset\/([A-Za-z0-9_-]+)/)[1];
+ assert.ok(sent[0].html.includes(`#reset/${token}`));
+ const stored=app.store.db.prepare('SELECT token FROM password_resets').get().token;assert.notEqual(stored,token,'Only a hash is stored');
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token,password:'short'})).status,400);
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token:'wrong-token',password:'second password here'})).status,400);
+ const reset=await stranger.request('/api/auth/reset','POST',{token,password:'second password here'});
+ assert.equal(reset.status,200);assert.equal(reset.value.user.email,'reset@example.com');
+ assert.equal((await owner.request('/api/auth/me')).value.user,null,'Old sessions are signed out');
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token,password:'third password here'})).status,400,'Link works only once');
+ assert.equal((await client().request('/api/auth/login','POST',{email:'reset@example.com',password:'first password here'})).status,401);
+ assert.equal((await client().request('/api/auth/login','POST',{email:'reset@example.com',password:'second password here'})).status,200);
+ await stranger.request('/api/auth/forgot','POST',{email:'reset@example.com'});
+ const expired=sent.at(-1).text.match(/#reset\/([A-Za-z0-9_-]+)/)[1];
+ app.store.db.prepare('UPDATE password_resets SET expires=?').run(Date.now()-1);
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token:expired,password:'fourth password here'})).status,400,'Expired links fail');
+});
+
+test('forgot password explains plainly when email is not set up',async t=>{
+ const f=await fixture(t),user=f.client();
+ const r=await user.request('/api/auth/forgot','POST',{email:'one@example.com'});
+ assert.equal(r.status,503);assert.match(r.value.error||JSON.stringify(r.value),/not switched on/);
 });
 
 test('uploaded project files become a private snapshot with the same filters as GitHub imports',async t=>{

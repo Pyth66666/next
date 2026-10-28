@@ -71,7 +71,7 @@ Run `npm.cmd install` then `npm.cmd test`. Tests cover the original demo, UI-to-
 
 ## Deployment boundary
 
-This is a functional MVP, not a production-hardened SaaS. Before public launch add email verification/reset, account and repository deletion/export policies, monitoring, backups, abuse controls/quotas, concurrency/job handling, provider evaluation, and a deployment security review. Local SQLite needs persistent disk. Vercel deployments use hosted Postgres instead; see [DEPLOYMENT.md](DEPLOYMENT.md) for required variables and verification steps.
+This is a functional MVP, not a production-hardened SaaS. Password reset by email is built in (configure `RESEND_API_KEY` and `EMAIL_FROM`; see DEPLOYMENT.md). Before public launch add email verification, account and repository deletion/export policies, monitoring, backups, abuse controls/quotas, concurrency/job handling, provider evaluation, and a deployment security review. Local SQLite needs persistent disk. Vercel deployments use hosted Postgres instead; see [DEPLOYMENT.md](DEPLOYMENT.md) for required variables and verification steps.
 
 For Vercel, follow the deployment guide; the API entrypoint does not listen on a port. For a regular Node host, configure `APP_ORIGIN` to its HTTPS origin, `HOST` to the required bind address, and `PORT` to the platform port. Secure cookies are then enabled. Serve UI and API from the same origin. The Vercel adapter and routing configuration are included, but a hosted database and production secrets must be provisioned separately. Existing local SQLite data is untouched and is not automatically migrated. B2B workstations, mentor/VC matching, Malaysian opportunity routing, automatic code changes and production sandbox execution remain outside this MVP.
 

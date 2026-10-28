@@ -37,6 +37,16 @@ https://apexelerate.vercel.app/api/github/callback
 
 Keep Contents and Metadata read-only. Public repository imports do not require a GitHub App connection.
 
+### Password reset emails
+
+"Forgot your password?" emails a one-time link that expires after 30 minutes. Links are stored in the same database (`password_resets` table, created automatically) as a SHA-256 hash, never as the link itself.
+
+1. Create a free account at [resend.com](https://resend.com).
+2. Under **Domains**, add your domain and add the DNS records Resend shows you. Wait until it says **Verified**. Without a verified domain, Resend only delivers to your own Resend sign-up address, which is fine for testing.
+3. Under **API Keys**, create a key with **Sending access**.
+4. In Vercel, add `RESEND_API_KEY` (the key) and `EMAIL_FROM` (for example `Apexelerate <hello@yourdomain.com>`, using the verified domain). `APP_ORIGIN` must be your real public address, because the emailed link is built from it.
+5. Redeploy, then test with **Account → Forgot your password?**. If no email arrives, check the Vercel function logs for `Password reset email failed`.
+
 Do not set `DATA_DIR` or `DATABASE_PATH` on Vercel. They are for local SQLite only. Your local `.env` is not uploaded by Git; enter the production secrets in Vercel separately.
 
 ## 3. Deploy the updated source

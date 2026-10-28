@@ -146,12 +146,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--brass);outline-o
 .account-benefits li{font-size:15px;color:var(--ink);padding-left:20px;position:relative}
 .account-benefits li::before{content:'';position:absolute;left:2px;top:.62em;width:8px;height:1px;background:var(--brass)}
 .forgot-link{display:inline-block;margin-top:16px;background:none;border:0;padding:0;font-size:14px!important;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-#reset-form h2,.recovery-card h2,#upload-form h2{font-size:28px;margin:0 0 8px}
-.reset-help{font-size:14px!important;color:var(--muted)!important;margin-top:14px!important}
-.recovery-panel{max-width:620px}
-.recovery-code{font-family:'Courier New',monospace;font-size:clamp(22px,4vw,30px)!important;letter-spacing:.08em;color:var(--ink)!important;background:var(--paper);border:1px dashed var(--brass);padding:18px 20px;text-align:center;margin:0 0 18px!important;user-select:all;word-break:break-all}
-.recovery-confirm{display:flex!important;align-items:center;gap:10px;font-size:15px;margin:20px 0 6px;font-weight:600}
-.recovery-confirm input{width:18px;height:18px;accent-color:var(--orange)}
+#reset-form h2,.reset-help{font-size:14px!important;color:var(--muted)!important;margin-top:14px!important}
 .button:disabled{opacity:.45;cursor:not-allowed}
 .upload-choices{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 8px}
 .upload-choice{position:relative;display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:1px solid var(--orange);color:var(--orange);font-weight:600;font-size:14px;cursor:pointer;background:var(--surface)}
@@ -171,3 +166,4 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--brass);outline-o
 .part-icon{display:none!important}
 [data-learning-activity]>span:first-child{display:none}
 .upload-choices .upload-choice{margin:0!important}
+.reset-help a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
