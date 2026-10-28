@@ -1,0 +1,195 @@
+/* Apexelerate theme — modelled on Y Combinator and YC companies (Stripe, Gusto, PostHog):
+   off-white page, near-black text, one orange accent, clean sans-serif, black pill buttons,
+   white cards with soft borders. Readability first: body 16px+, grey text kept at 5:1 contrast or better.
+   Loaded last so it settles typography and shared details on top of the older sheets. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Source+Serif+4:ital,wght@1,400;1,500&display=swap');
+
+:root{
+ --paper:#fafaf7;        /* page */
+ --surface:#ffffff;      /* cards */
+ --soft:#f3f2ec;         /* quiet fills, hover */
+ --line:#e4e2db;         /* borders */
+ --line-strong:#cfccc3;
+ --ink:#16140f;          /* text, primary buttons */
+ --muted:#57534e;        /* secondary text: 7:1 on white */
+ --accent:#ff6600;       /* YC orange: marks, highlights, focus */
+ --accent-soft:#fff1e6;
+ --orange:#16140f;       /* legacy name used by older sheets for primary actions */
+ --green:#1f7a4d;
+ --danger:#b42318;
+ --display:'Outfit',system-ui,sans-serif;
+ --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+ --serif:'Source Serif 4',Georgia,serif;
+ --radius:12px;
+}
+
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);font-size:16px;line-height:1.6;background:var(--paper);color:var(--ink)}
+button,input,textarea,select{font-family:var(--sans)}
+
+/* ---------- Type ---------- */
+h1,h2,.welcome-intro h1,.workspace-heading h1,.question-main h1,.editor-heading h1,.connect-page h1,.learn-heading h1{
+ font-family:var(--display);font-weight:600;letter-spacing:-.02em!important;color:var(--ink)}
+h3{font-family:var(--sans);font-weight:600;letter-spacing:-.01em!important}
+/* YC-style emphasis: the second line in italic serif, same ink colour */
+h1>span,h1 span,.workspace-heading h1 span,.welcome-intro h1 span{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--ink)!important;letter-spacing:-.01em}
+.welcome-intro h1{font-size:clamp(44px,5.6vw,76px);line-height:1.04}
+.question-main h1,.editor-heading h1{font-size:clamp(28px,2.8vw,38px);line-height:1.15}
+.start-choice h2,.project-card h2{font-size:22px;line-height:1.25;font-family:var(--display)}
+
+.eyebrow,.choice-number{font-size:12px!important;letter-spacing:.08em!important;color:var(--muted)!important;font-weight:600;text-transform:uppercase}
+.live-dot{background:var(--accent)!important}
+.welcome-location{font-size:13px!important;letter-spacing:0!important;color:var(--muted)!important;font-weight:400!important}
+
+/* Nothing below 14px; grey text uses the readable muted tone */
+.start-choice p,.question-main>p,.journey-rail button small,.prompt-method-options small,.inline-build-heading span,
+.storage-note,.cloud-status,.sidebar-caption,.choice-bottom,.welcome-footer p,.text-link,.gui-details>summary,
+.how-disclosure summary,.project-progress span,.project-card-foot span,.mini-project-path span{font-size:14px!important;line-height:1.55!important}
+.welcome-intro>p{font-size:19px!important;line-height:1.55!important;color:var(--muted);max-width:620px!important}
+.start-choice p,.question-main>p,.inline-build-heading span{color:var(--muted)!important}
+
+/* ---------- Buttons: black pills, white secondary ---------- */
+.button{border-radius:999px!important;font-size:15px;font-weight:600;letter-spacing:0;padding:13px 22px;gap:10px;transition:background .15s,border-color .15s,color .15s}
+.button:hover:not(:disabled){transform:none}
+.button.orange,.button.dark{background:var(--ink);color:#fff;border:1px solid var(--ink)}
+.button.orange:hover:not(:disabled),.button.dark:hover:not(:disabled){background:#2e2b24}
+.button.light{background:var(--surface);border:1px solid var(--line-strong);color:var(--ink)}
+.button.light:hover:not(:disabled){border-color:var(--ink)}
+.button:disabled{opacity:.4;cursor:not-allowed}
+.text-link{color:var(--ink);font-weight:600}
+
+/* ---------- Cards ---------- */
+.start-choice,.project-card,.inline-build-card,.prompt-method-options button,[data-problem-area],.connection-card,
+.account-card,.pitch-project-card,.next-steps-guide,.template-card,.lesson-panel,.knowledge-check{
+ border-radius:var(--radius)!important;background:var(--surface);border:1px solid var(--line)!important;box-shadow:0 1px 2px rgba(22,20,15,.04)!important}
+.empty-state{border-radius:var(--radius)!important;border-color:var(--line-strong)!important;background:transparent}
+.pitch-project-card button,.pitch-track-link{border-radius:10px!important}
+
+.start-choice{transition:border-color .15s,box-shadow .15s}
+.start-choice:hover{transform:none;border-color:var(--line-strong)!important;box-shadow:0 6px 20px rgba(22,20,15,.07)!important}
+/* The main starting point: YC orange card with black text (7:1 contrast) */
+.start-choice.choice-idea{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--ink)}
+.start-choice.choice-idea h2,.start-choice.choice-idea p,.start-choice.choice-idea .choice-bottom{color:var(--ink)!important}
+.start-choice.choice-idea .choice-bottom{border-top-color:rgba(22,20,15,.2)}
+.choice-icon{width:auto!important;height:auto!important;background:none!important;border-radius:0!important;font-family:var(--display);font-size:15px!important;font-weight:600;color:var(--muted)!important;letter-spacing:.04em}
+.choice-idea .choice-icon{color:var(--ink)!important}
+.choice-number{display:none}
+
+/* ---------- Forms ---------- */
+input,textarea,select{border-radius:10px!important;border-color:var(--line-strong)!important;background:var(--surface)!important;color:var(--ink);font-size:16px}
+input::placeholder,textarea::placeholder{color:#8a857c}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent)!important;outline-offset:1px;border-color:var(--accent)!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label{color:var(--ink)}
+
+/* ---------- Navigation ---------- */
+.guided-nav{background:var(--surface)!important;border-color:var(--line)!important}
+.guided-nav .brand,.brand{font-family:var(--display);font-weight:700;letter-spacing:-.02em!important;color:var(--ink)}
+.guided-nav .brand{font-size:24px}
+.mark,.guided-nav .mark{background:var(--accent)!important}
+.brand-dot{color:var(--accent)!important}
+.sidebar-caption{color:var(--muted)!important;letter-spacing:.06em;font-size:11px!important;text-transform:uppercase}
+.guided-nav nav>a>span:first-child,.mobile-dock a>span:first-child{display:none}
+.guided-nav nav>a{font-size:15px!important;font-weight:500;color:var(--muted);border-radius:8px!important;padding:10px 14px!important;min-height:42px}
+.guided-nav nav>a:hover{background:var(--soft)!important;color:var(--ink)}
+.guided-nav nav>a.active{background:var(--soft)!important;color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)!important}
+.sidebar-mini-mark,.welcome-spark{display:none!important}
+.guided-nav .nav-toggle{border-radius:999px!important;background:var(--soft)!important;border:0!important}
+.mobile-dock{background:rgba(255,255,255,.96)!important;border-top:1px solid var(--line)!important}
+.mobile-dock a{font-size:13px!important;font-weight:600;color:var(--muted)!important;border-radius:0!important}
+.mobile-dock a.active{background:transparent!important;color:var(--ink)!important;box-shadow:inset 0 -2px 0 var(--accent)}
+
+/* ---------- Brief builder ---------- */
+[data-problem-area]>span:first-child{display:none}
+[data-problem-area]:hover{border-color:var(--line-strong)!important}
+[data-problem-area].selected,.prompt-method-options button[aria-pressed=true]{border-color:var(--ink)!important;background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--ink)!important}
+.prompt-method-options button>span{font-size:12px!important;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)!important;font-weight:600}
+
+/* ---------- Project journey ---------- */
+.journey-rail button>span{border-color:var(--line-strong)!important;font-family:var(--sans)!important;font-size:13px!important;font-weight:600}
+.journey-rail button strong{font-size:15px!important;font-weight:600}
+.journey-rail button[aria-current=step]>span{background:var(--ink)!important;border-color:var(--ink)!important;color:#fff!important}
+.journey-rail button[aria-current=step]::after{background:var(--accent)!important;height:2px!important}
+
+/* ---------- Brief document ---------- */
+.inline-build-brief.brief-doc{white-space:normal;font-family:var(--sans);font-size:15px;line-height:1.65;overflow:auto;background:var(--surface)}
+.brief-doc h4{font-family:var(--display);font-size:22px;font-weight:600;margin:0 0 6px;line-height:1.25;letter-spacing:-.01em}
+.brief-doc h5{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:20px 0 6px;font-weight:700}
+.brief-doc p{margin:0 0 8px}
+.brief-doc ul{margin:0 0 8px;padding-left:20px}
+.brief-doc li{margin:2px 0}
+#inline-build-prompt,textarea{font-family:var(--sans)!important}
+#inline-build-prompt{height:260px!important;font-size:14px!important;line-height:1.6}
+
+/* ---------- Next steps after copying ---------- */
+.next-steps-guide{margin:28px 0 8px;padding:28px 30px}
+.next-steps-guide h3{font-family:var(--display);font-size:26px;font-weight:600;margin:6px 0 16px}
+.next-steps-guide ol{margin:0;padding-left:24px;display:grid;gap:12px;max-width:760px}
+.next-steps-guide li{font-size:16px;line-height:1.6;color:var(--ink);padding-left:4px}
+.next-steps-guide li::marker{font-weight:700;color:var(--accent)}
+.next-steps-guide em{font-style:normal;font-weight:600}
+
+/* ---------- Projects ---------- */
+.rename-link{background:none;border:0;padding:0;margin:2px 0 10px;font-size:14px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.rename-link:hover{color:var(--ink)}
+.rename-form{margin:14px 0 12px;max-width:620px}
+.rename-form label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.rename-form div{display:flex;gap:10px}
+.rename-form input{flex:1;min-width:0;font-family:var(--display);font-size:24px;padding:8px 14px;border:1px solid var(--line-strong)}
+.filter-toolbar.few-projects,.filter-toolbar.few-projects+.filter-summary{display:none}
+.template-icon,.part-icon{display:none!important}
+.workspace-section-title h2 span{font-family:var(--sans);font-size:13px!important;background:var(--soft);color:var(--muted)}
+[data-learning-activity]>span:first-child{display:none}
+
+/* ---------- Account, password reset, uploads ---------- */
+.account-context{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;font-size:15px!important;margin:0 0 18px!important;color:var(--ink)!important}
+.account-benefits{margin:0 0 22px;padding:0;list-style:none;display:grid;gap:8px}
+.account-benefits li{font-size:15px;color:var(--ink);padding-left:22px;position:relative}
+.account-benefits li::before{content:'';position:absolute;left:3px;top:.55em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.forgot-link{display:inline-block;margin-top:16px;background:none;border:0;padding:0;font-size:14px!important;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#forgot-form h2,#upload-form h2{font-size:24px;margin:0 0 8px}
+.reset-help{font-size:14px!important;color:var(--muted)!important;margin-top:14px!important}
+.reset-help a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.upload-choices{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 8px}
+.upload-choices .upload-choice{margin:0!important}
+.upload-choice{position:relative;display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:1px solid var(--line-strong);border-radius:999px;color:var(--ink);font-weight:600;font-size:15px;cursor:pointer;background:var(--surface)}
+.upload-choice:hover{border-color:var(--ink)}
+.upload-choice:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.upload-choice input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.upload-picked{font-size:14px!important;color:var(--muted)!important;margin:4px 0 18px!important}
+#upload-form small{font-weight:400;color:var(--muted)}
+.github-option{margin:22px 0 10px;max-width:900px}
+.github-option>summary{cursor:pointer;font-size:15px;font-weight:600;padding:12px 0;color:var(--ink)}
+.github-option[open]>summary{margin-bottom:12px}
+.guest-save-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;margin:22px 0 4px;padding:16px 20px;background:var(--accent-soft);border:1px solid #ffd2b3;border-radius:var(--radius)}
+.guest-save-note p{margin:0;font-size:15px;line-height:1.55;max-width:560px}
+.guest-save-note div{display:flex;flex-wrap:wrap;gap:10px}
+.guest-save-note .button{padding:10px 18px;font-size:14px}
+
+/* ---------- Messages ---------- */
+.error,#pitch-color-warning{color:var(--danger)!important}
+.pitch-preview-warning{color:#7a3a0c!important;background:var(--accent-soft)!important}
+#toast{border-radius:999px;background:var(--ink)!important;color:#fff!important}
+
+@media(max-width:760px){
+ .welcome-intro h1{font-size:44px}
+ .start-choice h2{font-size:21px}
+ .guided-nav .brand{font-size:22px}
+ .guest-save-note .button,.upload-choice{width:100%}
+ .guest-save-note div{width:100%}
+}
+
+/* ---------- Small-text clean-up ---------- */
+[data-problem-area] small,[data-problem-area] span:not(:first-child){font-size:14px!important;line-height:1.5}
+[data-problem-area] strong{font-size:16px}
+.welcome-footer>span{font-size:12px!important;letter-spacing:.06em;color:var(--muted)}
+.editor-buttons .button,.workspace-heading .button{font-size:14px!important;padding:11px 18px!important}
+.editor-heading p,.workspace-heading p,.pitch-heading p{font-size:15px!important;color:var(--muted)}
+.sidebar-foot p,.sidebar-foot .cloud-status{font-size:13px!important;color:var(--muted)}
+.question-nav button{font-size:14px!important}
+.project-card .status{font-size:12px!important;border-radius:999px;padding:3px 10px}
+.project-card-foot .button,.project-card-foot a{font-size:14px!important;border-radius:999px!important}
+.journey-rail button small{color:var(--muted)}
+.account-card>p,.setup-help p,.repo-consent,#upload-form>p,#forgot-form>p,.connection-strip span{font-size:14px!important;line-height:1.6!important;color:var(--muted)}
+.repo-consent{font-size:13px!important}
+.form-feedback{font-size:14px!important}
