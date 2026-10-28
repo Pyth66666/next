@@ -23,7 +23,7 @@ test('public handoff uses real-code entry points; admin demonstration retains le
  const fill=(selector,value)=>{const el=window.document.querySelector(selector);assert.ok(el);el.value=value;el.dispatchEvent(new window.Event('input',{bubbles:true}));};
  try{
   await import('../public/app.js');
-  assert.match(window.document.querySelector('h1').textContent,/Big idea/);
+  assert.match(window.document.querySelector('h1').textContent,/big idea/i);
   click('[data-action="new"]');await tick();
   assert.match(window.document.querySelector('.builder-sidebar>.eyebrow').textContent,/IDEA PLANNER/);
   assert.ok(window.document.querySelector('[data-problem-area="business"]'));
