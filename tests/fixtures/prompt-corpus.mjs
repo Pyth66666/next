@@ -1,4 +1,4 @@
-import {promptFor} from '../../public/studio-data.js';
+import {promptFor} from '../../shared/studio-data.js';
 
 // Synthetic projects only. No duplicated-line stress fixture in the headline benchmark.
 const briefs=[

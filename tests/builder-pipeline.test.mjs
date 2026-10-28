@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {proposeBuilderPrompt,selectBuilderProfile,validateBuilderPlan} from '../backend/builder-pipeline.mjs';
-import {promptFor} from '../public/studio-data.js';
+import {promptFor} from '../shared/studio-data.js';
 
 const project={output:'Students can cancel only their own bookings. No online payments. Keep private data on the server.',answers:[],type:'mvp'};
 const config={provider:'gemini',model:'fixture-model'};

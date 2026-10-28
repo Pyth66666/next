@@ -1,4 +1,4 @@
-import {promptFor} from '../public/studio-data.js';
+import {promptFor} from '../shared/studio-data.js';
 import {compileForTarget,referenceCounter} from './prompt-compiler.mjs';
 import {ApiError,parseJson} from './providers.mjs';
 

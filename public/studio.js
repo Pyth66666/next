@@ -1,4 +1,4 @@
-import {promptFor,projectStage,selectProjects} from './studio-data.js';
+import {promptFor,projectStage,selectProjects} from '../shared/studio-data.js';
 
 export function createStudio({app,header,esc,toast,getProjects,getActive,storageOK}){
  let state={query:'',stage:'all',type:'all',sort:'recent',view:'grid'};

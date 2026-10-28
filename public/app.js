@@ -1,7 +1,7 @@
 import {installGuidedUI,navigationMarkup} from './guided-ui.js';
 import {installNavigation} from './navigation.js';
 installNavigation();
-import {questions as mvpQuestions,legacyQuestions,detailQuestions,generate as generateLegacy,checklist as legacyChecklist,generateMvp} from './engine.js';
+import {questions as mvpQuestions,legacyQuestions,detailQuestions,generate as generateLegacy,checklist as legacyChecklist,generateMvp} from '../shared/engine.js';
 import {problemAreas,briefSteps,stepValue,setStepValue} from './brief-flow.js';
 let questions=mvpQuestions;
 const generate=p=>p.type==='mvp'?generateMvp(p):generateLegacy(p);

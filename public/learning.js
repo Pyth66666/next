@@ -1,4 +1,4 @@
-import {buildPack} from './engine.js';
+import {buildPack} from '../shared/engine.js';
 export function matchLesson(value){const s=value.toLowerCase();if(/password|secret|environment|api key|database_url/.test(s))return 'environment';if(/login|log in|sign.?in|auth|session|permission/.test(s))return 'auth';if(/database|stored|storage|remember|schema/.test(s))return 'database';if(/backend|server|rule/.test(s))return 'backend';if(/frontend|button|screen|form|click|booking|book a/.test(s))return 'frontend';return null;}
 export function diagnose(value){return /double|duplicate|same slot|two (customers|people|users)|concurr|race condition/i.test(value)?'double-booking':null;}
 

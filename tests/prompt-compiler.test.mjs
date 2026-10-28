@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {makeCandidates,decodeCandidate,compilePrompt,validateCompilation} from '../public/prompt-compiler.js';
+import {makeCandidates,decodeCandidate,compilePrompt,validateCompilation} from '../shared/prompt-compiler.js';
 import {compileForTarget,referenceCounter} from '../backend/prompt-compiler.mjs';
 import {installCompilerPanel} from '../public/prompt-compiler-ui.js';
-import {promptFor} from '../public/studio-data.js';
-import {recognizeBuildPrompt} from '../public/build-contract.js';
+import {promptFor} from '../shared/studio-data.js';
+import {recognizeBuildPrompt} from '../shared/build-contract.js';
 import {benchmarkCases} from './fixtures/prompt-corpus.mjs';
 
 const compile=(source,options={})=>compileForTarget(source,'reference-o200k',{},()=>{throw new Error('No network allowed');},options);

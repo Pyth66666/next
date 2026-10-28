@@ -14,7 +14,7 @@ Open **Compare prompt size (optional)** in Build or the builder-instructions dia
 
 The user-approved brief stays character-for-character intact, including whitespace, numbers, permissions, negations and code. Only a recognized Apexelerate wrapper is rewritten. The compact wrapper preserves the reviewed scope, architecture, learning, security, testing and documentation instructions. Its original source is recoverable through the reviewed template mapping. This verifies text preservation and provenance; it does not prove equal behavior from a coding model.
 
-`public/builder-template-snapshots.js` pins the reviewed source wrappers. A future template change or a custom wrapper falls back to the original until reviewed. Test/change prompts are left alone. Dictionary and JSON encodings require the advanced experimental checkbox; dictionary candidates are generated only when lines repeat. Decoder instructions and encoding overhead are included in counts.
+`shared/builder-template-snapshots.js` pins the reviewed source wrappers. A future template change or a custom wrapper falls back to the original until reviewed. Test/change prompts are left alone. Dictionary and JSON encodings require the advanced experimental checkbox; dictionary candidates are generated only when lines repeat. Decoder instructions and encoding overhead are included in counts.
 
 The selected candidate must save at least **8 tokens and 2%** versus the original. Ties and smaller gains keep the original. If any count fails, the UI retains the original. **Use original** restores it. Editing a prompt, regenerating a task or changing options invalidates previous results. Stale success and error responses cannot overwrite newer text.
 

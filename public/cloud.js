@@ -1,4 +1,4 @@
-import {githubName} from './repository-name.js';
+import {githubName} from '../shared/repository-name.js';
 import {installCompilerPanel} from './prompt-compiler-ui.js';
 export function createCloud({app,header,esc,toast,getProjects,setProjects,getActive,save,renderCurrent,onDemo=()=>{}}){
  let account=null,csrf=null,config=null,github=null,repo=null,history=[],quiz=null,settings={level:'beginner',detail:'quick',language:'English',activity:'chat'},progress={},page=1,ready=false,setupError='',afterSignIn='';

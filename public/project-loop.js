@@ -1,4 +1,4 @@
-import {deckProgress} from './pitch-data.js';
+import {deckProgress} from '../shared/pitch-data.js';
 
 export function createProjectLoop({app,esc,toast,getActive,save,cloud}){
  const reports=new Map();

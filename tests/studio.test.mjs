@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {promptFor,projectStage,selectProjects} from '../public/studio-data.js';
+import {promptFor,projectStage,selectProjects} from '../shared/studio-data.js';
 const project={output:'Only the booking owner can cancel. No payments. Keep failures visible.',answers:['Booking app','Customers can book'],tasks:[],type:'mvp',created:10};
 test('guided and concise build prompts preserve the entire approved document',()=>{for(const mode of ['guided','concise']){const text=promptFor(project,mode);assert.ok(text.includes(project.output));assert.ok(text.includes('ARCHITECTURE.md'));}assert.ok(promptFor(project,'concise').length<promptFor(project,'guided').length);});
 test('verification and change prompts serve distinct tasks',()=>{assert.ok(promptFor(project,'concise','test').includes('pass/fail/not-tested'));const text=promptFor(project,'concise','change','Add cancellation emails');assert.ok(text.includes('Add cancellation emails'));assert.ok(text.includes('already has the project context'));assert.ok(!text.includes(project.output));});

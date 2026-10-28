@@ -1,4 +1,4 @@
-import {validateCompilation} from './prompt-compiler.js';
+import {validateCompilation} from '../shared/prompt-compiler.js';
 export function installCompilerPanel(field,request){
  const document=field.ownerDocument;
  const panel=document.createElement('div');panel.className='prompt-compiler-panel';

@@ -1,4 +1,4 @@
-import {detailQuestions} from './engine.js';
+import {detailQuestions} from '../shared/engine.js';
 
 export const problemAreas=[
  {id:'student',label:'Student life',icon:'✦',examples:['Finding a tutor or study group','Keeping group projects on track','Finding internships and opportunities']},

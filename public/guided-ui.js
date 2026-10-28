@@ -1,4 +1,4 @@
-import {promptFor} from './studio-data.js';
+import {promptFor} from '../shared/studio-data.js';
 import {installCompilerPanel} from './prompt-compiler-ui.js';
 
 const icons={home:'⌂',projects:'▦',learn:'⌘',pitch:'↗',account:'◎'};
