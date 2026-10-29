@@ -188,3 +188,64 @@ test('static server does not expose configuration, storage or backend sources',a
  const home=await a.request('/');assert.equal(home.status,200);assert.match(home.value,/cloud.css/);assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
  const config=await a.request('/api/config');assert.equal(config.value.githubSecret,undefined);assert.equal(config.value.nvidiaKey,undefined);assert.equal(config.value.geminiKey,undefined);assert.equal(config.value.providerName,'Gemini');assert.equal(config.value.aiConfigured,false);
 });
+
+test('email reset link changes the password once, signs out old sessions and never reveals who has an account',async t=>{
+ const dataDir=mkdtempSync(join(tmpdir(),'apex-reset-')),sent=[];
+ const service={async ai(){throw new Error('unused');},async github(){throw new Error('unused');},async sendEmail(message){sent.push(message);return {id:'email-1'};}};
+ const config={...configuration({}),dataDir,port:0,resendKey:'re_test',emailFrom:'Apexelerate <hello@example.com>'};
+ const app=createApplication({config,providers:service});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${app.server.address().port}`;
+ t.after(async()=>{await new Promise(r=>app.server.close(r));app.store.db.close();rmSync(dataDir,{recursive:true,force:true});});
+ const client=()=>{let cookie='',csrf='';return {async request(path,method='GET',data){const r=await fetch(base+path,{method,headers:{Origin:config.origin,...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{}),...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];const value=await r.json().catch(()=>null);if(value?.csrf)csrf=value.csrf;return {status:r.status,value};}};};
+ const owner=client(),stranger=client();
+ assert.equal((await owner.request('/api/auth/register','POST',{email:'reset@example.com',password:'first password here'})).status,200);
+ assert.equal((await stranger.request('/api/config')).value.emailConfigured,true);
+ const unknown=await stranger.request('/api/auth/forgot','POST',{email:'nobody@example.com'});
+ assert.equal(unknown.status,200);assert.equal(sent.length,0,'No email for an unknown address');
+ const known=await stranger.request('/api/auth/forgot','POST',{email:'Reset@Example.com'});
+ assert.deepEqual(known.value,unknown.value,'Same answer either way');
+ assert.equal(sent.length,1);assert.equal(sent[0].to,'reset@example.com');
+ const token=sent[0].text.match(/#reset\/([A-Za-z0-9_-]+)/)[1];
+ assert.ok(sent[0].html.includes(`#reset/${token}`));
+ const stored=app.store.db.prepare('SELECT token FROM password_resets').get().token;assert.notEqual(stored,token,'Only a hash is stored');
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token,password:'short'})).status,400);
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token:'wrong-token',password:'second password here'})).status,400);
+ const reset=await stranger.request('/api/auth/reset','POST',{token,password:'second password here'});
+ assert.equal(reset.status,200);assert.equal(reset.value.user.email,'reset@example.com');
+ assert.equal((await owner.request('/api/auth/me')).value.user,null,'Old sessions are signed out');
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token,password:'third password here'})).status,400,'Link works only once');
+ assert.equal((await client().request('/api/auth/login','POST',{email:'reset@example.com',password:'first password here'})).status,401);
+ assert.equal((await client().request('/api/auth/login','POST',{email:'reset@example.com',password:'second password here'})).status,200);
+ await stranger.request('/api/auth/forgot','POST',{email:'reset@example.com'});
+ const expired=sent.at(-1).text.match(/#reset\/([A-Za-z0-9_-]+)/)[1];
+ app.store.db.prepare('UPDATE password_resets SET expires=?').run(Date.now()-1);
+ assert.equal((await stranger.request('/api/auth/reset','POST',{token:expired,password:'fourth password here'})).status,400,'Expired links fail');
+});
+
+test('forgot password explains plainly when email is not set up',async t=>{
+ const f=await fixture(t),user=f.client();
+ const r=await user.request('/api/auth/forgot','POST',{email:'one@example.com'});
+ assert.equal(r.status,503);assert.match(r.value.error||JSON.stringify(r.value),/not switched on/);
+});
+
+test('uploaded project files become a private snapshot with the same filters as GitHub imports',async t=>{
+ const f=await fixture(t),user=f.client();
+ assert.equal((await user.request('/api/repositories/upload','POST',{name:'x',files:[{path:'a.js',content:'1'}]})).status,403);
+ await user.register('upload@example.com');
+ const result=await user.request('/api/repositories/upload','POST',{name:'Cake app',totalFiles:5,files:[
+  {path:'src/app.js',content:'const api_key = "private-secret";\nexport const ok=1;'},
+  {path:'.env',content:'SECRET=1'},
+  {path:'node_modules/x/index.js',content:'x'},
+  {path:'logo.png',content:'binary'},
+  {path:'README.md',content:'# Cake app'}]});
+ assert.equal(result.status,201);
+ assert.equal(result.value.fullName,'Cake app');
+ assert.equal(result.value.source,'upload');
+ assert.deepEqual(result.value.files.map(x=>x.path).sort(),['README.md','src/app.js']);
+ assert.equal(result.value.partial,true);
+ const file=await user.request(`/api/repositories/${result.value.id}/file?path=src%2Fapp.js`);
+ assert.ok(!file.value.content.includes('private-secret'),'Secrets are redacted');
+ assert.equal((await user.request('/api/repositories/upload','POST',{name:'Bad',files:[{path:'../etc/passwd.js',content:'x'}]})).status,400);
+ assert.equal((await user.request('/api/repositories/upload','POST',{name:'Empty',files:[{path:'.env',content:'x'}]})).status,400);
+ assert.equal((await f.client().request(`/api/repositories/${result.value.id}`)).status,401);
+ const list=await user.request('/api/repositories');assert.equal(list.value.length,1);
+});

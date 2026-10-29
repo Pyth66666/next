@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {pitchSlides,emptySlide,slideReadiness,deckProgress,validatePitch,pitchOutline} from '../public/pitch-data.js';
+import {pitchSlides,emptySlide,slideReadiness,deckProgress,validatePitch,pitchOutline} from '../shared/pitch-data.js';
 import {createPitch} from '../public/pitch.js';
 import {slideCanvas,deckHtml} from '../public/pitch-visual.js';
 

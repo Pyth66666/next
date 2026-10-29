@@ -1,4 +1,6 @@
 node_modules/
+public/vendor/pptxgenjs.bundle.js
+public/vendor/pptxgenjs.LICENSE.txt
 tmp/
 data/
 .env

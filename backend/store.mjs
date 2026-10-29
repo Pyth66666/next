@@ -14,12 +14,18 @@ export const schema=` CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email
  CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),repo_id TEXT NOT NULL REFERENCES repositories(id),role TEXT NOT NULL,content TEXT NOT NULL,created BIGINT NOT NULL);
  CREATE TABLE IF NOT EXISTS quizzes(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),repo_id TEXT NOT NULL REFERENCES repositories(id),data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS progress(user_id TEXT PRIMARY KEY REFERENCES users(id),data TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS password_resets(token TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),expires BIGINT NOT NULL);
 
  CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires BIGINT NOT NULL);
  CREATE INDEX IF NOT EXISTS session_expiry ON sessions(expires);
- CREATE INDEX IF NOT EXISTS conversation_history ON conversations(repo_id,user_id,created);`;
+ CREATE INDEX IF NOT EXISTS conversation_history ON conversations(repo_id,user_id,created);
+ CREATE INDEX IF NOT EXISTS rate_limit_expiry ON rate_limits(expires);`;
 // Queries are internal literals; user values remain separately bound parameters.
 export function postgresQuery(sql){let n=0;return sql.replace(/\?/g,()=>`$${++n}`);}
+// The '?' -> '$n' rewrite assumes every '?' is a placeholder. A literal '?' added
+// to a future query string would silently shift every later placeholder, so the
+// rewritten count is checked against the bound arguments and fails loudly instead.
+export function countPlaceholders(sql){let n=0;sql.replace(/\?/g,()=>{n++;return '';});return n;}
 export function createStore(config,options={}){
  let db,key;
  if(config.databaseUrl){
@@ -39,6 +45,8 @@ export function createStore(config,options={}){
    }catch(e){await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
   }
   async function query(sql,args){
+   const expected=countPlaceholders(sql);
+   if(expected!==args.length)throw new Error(`Query placeholder mismatch: ${expected} placeholders for ${args.length} arguments.`);
    if(!initialized)initialized=initialize().catch(e=>{initialized=undefined;throw e;});
    await initialized;
    return pool.query(postgresQuery(sql),args);

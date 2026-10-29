@@ -1,5 +1,6 @@
 // Framework adapted from the user-supplied HACKDEV X AIESEC HWUM PDF, pages 1-10.
 // Hackathon prompts are Apexelerate adaptations, not additional source-deck requirements.
+import {validateDeckDesign,validateSlidePresentation} from './pitch-design.js';
 export const pitchSource={name:'HACKDEV X AIESEC HWUM',pages:'1–10',version:1};
 const q=(id,label,hint)=>({id,label,hint});
 export const pitchSlides=[
@@ -38,11 +39,13 @@ export function validatePitch(value){
   if(!deck||typeof deck!=='object'||Array.isArray(deck)||!deck.slides||typeof deck.slides!=='object'||Array.isArray(deck.slides))throw Error('Invalid pitch deck.');
   const duration=deck.duration??3;if(!Number.isFinite(duration)||duration<1||duration>30)throw Error('Pitch duration must be 1–30 minutes.');
   const clean={event:string(deck.event,200),criteria:string(deck.criteria,2000),duration,slides:{}};
+  if(deck.design!==undefined)clean.design=validateDeckDesign(deck.design);
   for(const def of pitchSlides){const raw=deck.slides[def.id];if(raw===undefined)continue;if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Invalid slide.');
    const s={headline:string(raw.headline,160),answers:{},evidence:string(raw.evidence,1500),evidenceState:raw.evidenceState??'missing',visual:string(raw.visual,1000),notes:string(raw.notes,2000),reviewed:raw.reviewed??false};
    if(!['missing','provided','assumption'].includes(s.evidenceState)||typeof s.reviewed!=='boolean')throw Error('Invalid slide review.');
    if(raw.answers!==undefined&&(!raw.answers||typeof raw.answers!=='object'||Array.isArray(raw.answers)))throw Error('Invalid slide answers.');
    for(const question of def.questions)s.answers[question.id]=string(raw.answers?.[question.id],1500);
+   if(raw.presentation!==undefined)s.presentation=validateSlidePresentation(raw.presentation,def);
    if(s.reviewed&&slideReadiness(def,s).missing.length)throw Error('Complete required content before reviewing a slide.');
    clean.slides[def.id]=s;
   }

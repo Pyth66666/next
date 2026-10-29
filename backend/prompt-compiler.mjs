@@ -1,4 +1,4 @@
-import {compilePrompt} from '../public/prompt-compiler.js';
+import {compilePrompt} from '../shared/prompt-compiler.js';
 import {ApiError,jsonFetch} from './providers.mjs';
 let referenceEncodingPromise;
 export async function referenceCounter(){

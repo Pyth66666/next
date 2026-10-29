@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {matchLesson,diagnose} from '../public/learning.js';
-import {buildPack,detailQuestions,generateMvp} from '../public/engine.js';
+import {buildPack,detailQuestions,generateMvp} from '../shared/engine.js';
 import {lessons,sampleFiles,repairPrompt} from '../backend/demo-data.mjs';
 test('agent handoff includes latest edited brief and verification instructions',()=>{const p={answers:['Coach app','Book in three minutes','Customers and coaches','No payments','Browse; Book'],output:'My edited requirements: use email sign-in'};const text=buildPack(p);assert.ok(text.includes(p.output));assert.ok(text.includes('ARCHITECTURE.md'));assert.ok(text.includes('Tests and their results'));assert.ok(!text.includes('undefined'));});
 test('MVP draft preserves all five user answers',()=>{const p={answers:['Coach app','Book in three minutes','Customers and coaches','No payments','Browse; Book']};const text=generateMvp(p);for(const answer of p.answers)assert.ok(text.includes(answer));});

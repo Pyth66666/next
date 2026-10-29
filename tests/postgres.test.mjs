@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {readFileSync,existsSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-import {createStore,postgresQuery} from '../backend/store.mjs';
+import {createStore,postgresQuery,countPlaceholders} from '../backend/store.mjs';
 import {createApplication} from '../backend/app.mjs';
 import {configuration} from '../backend/config.mjs';
 import vercelHandler from '../api/index.mjs';
@@ -20,6 +20,24 @@ test('Vercel configuration requires persistent storage, a stable key and explici
  assert.equal(deploy.framework,null);assert.equal(deploy.outputDirectory,'public');
  assert.equal(deploy.rewrites[0].destination,'/api/index');
  assert.ok(deploy.functions['api/index.mjs'].maxDuration>=120);
+});
+
+test('placeholder rewriting numbers every ? in order and counts them consistently',()=>{
+ assert.equal(postgresQuery('SELECT * FROM t WHERE a=? AND b=?'),'SELECT * FROM t WHERE a=$1 AND b=$2');
+ assert.equal(postgresQuery('SELECT 1'),'SELECT 1');
+ assert.equal(countPlaceholders('INSERT INTO rate_limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN rate_limits.expires<=? THEN 1 ELSE rate_limits.count+1 END,expires=CASE WHEN rate_limits.expires<=? THEN excluded.expires ELSE rate_limits.expires END RETURNING count'),4);
+ assert.equal(countPlaceholders('SELECT 1'),0);
+ // Every placeholder in the source must receive a bound argument.
+ const mismatch='SELECT * FROM t WHERE a=? AND b=?';
+ assert.notEqual(countPlaceholders(mismatch),1);
+});
+
+test('a placeholder/argument mismatch is rejected before reaching the database',async()=>{
+ let queried=false;
+ const pool={async connect(){return {async query(){return {rows:[]};},release(){}};},async query(){queried=true;return {rows:[],rowCount:0};},async end(){}};
+ const store=createStore({databaseUrl:'postgres://fixture/db',tokenKey:'ab'.repeat(32)},{pool});
+ await assert.rejects(store.db.prepare('SELECT * FROM t WHERE a=? AND b=?').get('only-one'),/placeholder mismatch/i);
+ assert.equal(queried,false);
 });
 
 test('serverless configuration failure returns actionable JSON, not an invocation crash',async()=>{
@@ -89,6 +107,35 @@ test('Postgres-backed API persists accounts, projects, source tutoring and encry
  // Shared rate limits survive changing function instance.
  await store.db.prepare('UPDATE rate_limits SET count=? WHERE key LIKE ?').run(20,'auth:%');
  assert.equal((await request('/api/auth/login','POST',{email:'one@example.com',password:'long test password'},1)).status,429);
+});
+
+test('Postgres rate limiting counts within a window, resets after expiry and indexes expiry',async()=>{
+ const engine=new PGlite();
+ const calls=[];
+ const pool={async connect(){return {async query(sql){calls.push(sql);return (await engine.exec(sql)).at(-1);},release(){}};},async query(sql,args){calls.push(sql);const r=await engine.query(sql,args);return {rows:r.rows,rowCount:r.affectedRows};},async end(){}};
+ const config={...configuration({APP_ORIGIN:'https://apexelerate.vercel.app',DATABASE_URL:'postgres://fixture/db',TOKEN_ENCRYPTION_KEY:'ab'.repeat(32)}),dataDir:'/not-a-writable-directory'};
+ const store=createStore(config,{pool});
+ const upsert='INSERT INTO rate_limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN rate_limits.expires<=? THEN 1 ELSE rate_limits.count+1 END,expires=CASE WHEN rate_limits.expires<=? THEN excluded.expires ELSE rate_limits.expires END RETURNING count';
+ try{
+  const now=Date.now(),window=600000;
+  // Within a live window the returned count increments rather than resetting.
+  const counts=[];
+  for(let i=1;i<=5;i++)counts.push((await store.db.prepare(upsert).get('ping:fixture',now+window,now,now)).count);
+  assert.deepEqual(counts,[1,2,3,4,5]);
+  assert.equal((await store.db.prepare('SELECT count FROM rate_limits WHERE key=?').get('ping:fixture')).count,5);
+  // A lapsed window restarts at 1 instead of continuing from the stale count.
+  await store.db.prepare('UPDATE rate_limits SET expires=? WHERE key=?').run(now-1,'ping:fixture');
+  assert.equal((await store.db.prepare(upsert).get('ping:fixture',now+window,now,now)).count,1);
+  // Expired rows are swept by the cleanup statement, and the expiry index exists.
+  await store.db.prepare('INSERT INTO rate_limits VALUES(?,?,?)').run('stale:fixture',1,now-1);
+  await store.db.prepare('DELETE FROM rate_limits WHERE expires<?').run(now);
+  const remaining=await store.db.prepare('SELECT key FROM rate_limits').all();
+  assert.deepEqual(remaining.map(r=>r.key),['ping:fixture']);
+  assert.equal((await engine.query(`SELECT indexname FROM pg_indexes WHERE tablename='rate_limits' AND indexname='rate_limit_expiry'`)).rows.length,1);
+  // The Postgres transport received native $n placeholders, never the '?' source form.
+  assert.ok(calls.some(s=>s.includes('$1')&&s.includes('rate_limits')));
+  assert.ok(calls.every(s=>!s.includes('?')));
+ }finally{await engine.close();}
 });
 
 test('Postgres initialization is shared, retries after failure and releases connections',async()=>{
