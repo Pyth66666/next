@@ -320,3 +320,31 @@ body:not(.is-landing)::before{content:'';position:fixed;top:0;left:0;right:0;hei
  .app-parts button{grid-template-columns:1fr!important;padding-right:48px!important}
  .app-parts small{font-size:13px!important}
 }
+
+/* ======================================================================
+   Simpler pass: same colours and art, less going on
+   ====================================================================== */
+/* One card shape everywhere */
+.project-card,.inline-build-card,.account-card,.connection-card,.next-steps-guide,.pitch-project-card,
+#upload-form,#forgot-form,#account-form,.recovery-panel,.start-choice,.guest-save-note,.pitch-choice-row a{border-radius:20px!important}
+[data-problem-area],.prompt-method-options button{border-radius:16px!important}
+/* Sidebar: navy, no zigzag edge, no flower */
+.guided-nav::after{display:none!important}
+.guided-nav .sidebar-foot .hibiscus-mark{display:none!important}
+/* Plain progress bar */
+.question-top+.progress-track,.progress-track{background:var(--line)!important;height:6px!important}
+.question-panel .progress-track>div::after{display:none!important}
+.question-panel .progress-track{margin-top:18px!important}
+/* Remove extra motifs inside content */
+.builder-sidebar::after,.next-steps-guide::after,.guest-save-note::before,.real-code .learn-heading::after{display:none!important}
+.next-steps-guide{background:#fff!important}
+.guest-save-note{padding-left:20px!important}
+.start-choice.choice-idea{background:var(--red)!important}
+.project-card::before{height:4px;background:var(--accent)}
+/* Header motifs: smaller and calmer */
+.workspace-heading::after,.pitch-hub-heading::after{width:96px;height:96px;right:190px;top:0;transform:rotate(8deg)}
+.pitch-hub-heading::after{right:200px}
+.repository-page::before,.account-page::before{width:96px;height:110px;top:20px}
+.account-page::before{width:110px}
+.empty-state{padding-top:130px!important;background-size:84px 84px!important;background-position:center 34px!important;border:1px dashed var(--line-strong)!important}
+@media(max-width:760px){.guest-save-note{padding-top:16px!important}}
