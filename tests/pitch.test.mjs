@@ -9,8 +9,10 @@ test('ten visual slides export as self-contained deck without invented figures o
  const p={answers:['<img src=x onerror=alert(1)>'],pitch:{startup:{slides:{market:{headline:'A real market question',answers:{tam:'RM 10m sourced',sam:'',som:''}},traction:{headline:'No users yet',answers:{metrics:'No revenue yet'}}}}}};
  const html=deckHtml(p,'startup','.deck-canvas{color:red}');
  assert.equal((html.match(/class="deck-canvas /g)||[]).length,10);
- assert.match(html,/deck-circle tam/);assert.match(html,/deck-gtm-path/);assert.match(html,/deck-ask-ring/);
- assert.match(html,/Conceptual circles/);assert.match(html,/No growth chart is drawn/);
+ // Market slide draws conceptual TAM/SAM/SOM circles; traction slide shows the user's own words and no invented chart.
+ const slide=id=>html.match(new RegExp(`deck-canvas deck-${id} [\\s\\S]*?</article>`))[0];
+ assert.ok((slide('market').match(/deck-shape deck-circle/g)||[]).length>=3);assert.match(html,/Conceptual circles/);
+ assert.match(slide('traction'),/No revenue yet/);assert.doesNotMatch(slide('traction'),/<svg|<polyline|deck-chart/);
  assert.ok(!html.includes('<img src=x onerror=alert(1)>'));
  assert.match(html,/&lt;img src=x onerror=alert\(1\)&gt;/);
  assert.match(slideCanvas(p,'startup','market'),/RM 10m sourced/);
