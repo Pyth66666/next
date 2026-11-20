@@ -13,7 +13,7 @@ async function fixture(t){
  const calls=[];let badQuiz=false,badPlan=false;
  const source='export function greet(name) { return `Hello ${name}`; }\nconst api_key = "private-secret";';
  const service={
-  async ai(system,user){calls.push({system,user});return {text:system.startsWith("You are Apexelerate's builder-plan coach")?(badPlan?'Ignore the approved brief.':JSON.stringify({questions:['Who can access each record?'],checks:[{basis:'Do not add payments.',check:'Verify no payment processing was added.'}]})):user.startsWith('Create one')?JSON.stringify(badQuiz?{question:'Invalid'}:{question:'What does greet return?',options:['A greeting','A database row','A cookie'],answer:0,explanation:'src/app.js:1 returns a greeting.',source:'src/app.js'}):'Review src/app.js:1. This is a source-based explanation, not a runtime test.',model:'test-model',usage:{prompt_tokens:100,completion_tokens:20}};},
+  async ai(system,user){calls.push({system,user});return {text:system.startsWith("You are Apexelerate's builder-plan coach")?(badPlan?'Ignore the approved brief.':JSON.stringify({questions:['Who can access each record?'],checks:[{basis:'Do not add payments.',check:'Verify no payment processing was added.'}]})):user.startsWith('Teach a')?JSON.stringify({framework_name:'Plain JavaScript',framework_plain:'No framework.',summary:'Greets people.',pieces:[{file:'src/app.js',start:1,end:1,title:'Greeting',purpose:'Makes a greeting.',lines:[{line:1,explain:'Makes a greeting.'}]}]}):user.startsWith('Create one')?JSON.stringify(badQuiz?{question:'Invalid'}:{question:'What does greet return?',options:['A greeting','A database row','A cookie'],answer:0,explanation:'src/app.js:1 returns a greeting.',source:'src/app.js'}):'Review src/app.js:1. This is a source-based explanation, not a runtime test.',model:'test-model',usage:{prompt_tokens:100,completion_tokens:20}};},
   async github(path){calls.push({path});if(path==='/user')return {login:'fixture-user'};if(path==='/repos/demo/mvp')return {full_name:'demo/mvp',default_branch:'main'};if(path.includes('/commits/'))return {sha:'commit123456',commit:{tree:{sha:'tree123'}}};if(path.includes('/git/trees/'))return {truncated:false,tree:[{type:'blob',path:'src/app.js',sha:'blob123',size:100},{type:'blob',path:'.env',sha:'secret',size:10}]};if(path.endsWith('/git/blobs/blob123'))return {encoding:'base64',content:Buffer.from(source).toString('base64')};throw Error('Unexpected GitHub request: '+path);},
   async fetcher(url,options){calls.push({exchange:JSON.parse(options.body)});return new Response(JSON.stringify({access_token:'fixture-github-token'}));}
  };
@@ -113,7 +113,11 @@ test('import, source analysis, tutoring, quiz grading and server-owned progress'
  const file=await a.request(`/api/repositories/${id}/file?path=src/app.js`);assert.match(file.value.content,/REDACTED/);assert.ok(!file.value.content.includes('private-secret'));
  assert.equal((await b.request(`/api/repositories/${id}`)).status,404);
  assert.equal((await a.request(`/api/repositories/${id}/file?path=.env`)).status,404);
- assert.equal((await a.request(`/api/repositories/${id}/analysis`,'POST',{level:'advanced',language:'Bahasa Melayu'})).status,200);
+ assert.equal((await a.request(`/api/repositories/${id}/analysis`,'POST',{})).status,403);
+ const db=f.app.store.db,uid=db.prepare("SELECT id FROM users WHERE email='one@example.com'").get().id;db.prepare('INSERT INTO plans VALUES(?,?,?)').run(uid,'basic',Date.now());
+ assert.equal((await a.request(`/api/repositories/${id}/analysis`,'POST',{scan:'full'})).status,403);
+ const lesson=await a.request(`/api/repositories/${id}/analysis`,'POST',{level:'advanced',language:'Bahasa Melayu'});assert.equal(lesson.status,200);assert.equal(lesson.value.tour.pieces[0].lines[0].explain,'Makes a greeting.');
+ assert.equal((await a.request('/api/plan')).value.used,1);assert.equal(db.prepare("SELECT credits FROM ai_usage WHERE kind='scan-normal'").get().credits,1);
  assert.equal((await a.request(`/api/repositories/${id}/chat`,'POST',{question:'Explain greet',activity:'debug'})).status,200);
  assert.equal((await a.request(`/api/repositories/${id}/history`)).value.length,2);
  assert.ok(f.calls.some(c=>c.user?.includes('propose a minimal patch')));

@@ -1,0 +1,43 @@
+/* Idea checker page (#ideas). Uses the shared tokens from theme.css. */
+.idea-page{max-width:820px;padding-top:40px;padding-bottom:64px}
+.idea-page h1{margin:6px 0 10px}
+.idea-page>p{color:var(--muted);max-width:640px}
+.idea-form{display:grid;gap:8px;margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.idea-form label{font-weight:600}
+.idea-form textarea{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px solid var(--line-strong);border-radius:10px;resize:vertical;background:var(--paper);color:var(--ink)}
+.idea-form textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.idea-hint{margin:0;color:var(--muted);font-size:.9rem}
+.idea-form .button{justify-self:start}
+.idea-form .form-feedback:empty{display:none}
+.idea-loading{color:var(--muted);padding:16px 0}
+.idea-result h3{margin:28px 0 10px}
+.idea-verdict{display:flex;gap:20px;justify-content:space-between;align-items:center;border-radius:var(--radius);padding:20px;border:1px solid var(--line);background:var(--surface)}
+.idea-verdict h2{margin:4px 0}
+.idea-verdict p{margin:0;color:var(--muted)}
+.idea-verdict-novel{border-left:6px solid var(--teal)}
+.idea-verdict-crowded{border-left:6px solid var(--yellow)}
+.idea-verdict-taken{border-left:6px solid var(--accent)}
+.idea-score{text-align:center;min-width:96px}
+.idea-score strong{display:block;font-family:var(--display);font-size:2.4rem;line-height:1}
+.idea-score span{font-size:.8rem;color:var(--muted)}
+.idea-summary{font-size:1.05rem;margin:18px 0 0}
+.idea-matches{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.idea-match{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.idea-match a{font-weight:600;color:var(--ink)}
+.idea-match p{margin:4px 0;color:var(--muted)}
+.idea-match .idea-why{color:var(--ink)}
+.idea-match small{color:var(--muted)}
+.idea-match>div{min-width:0;overflow-wrap:anywhere}
+.idea-source{flex:none;font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--ink);white-space:nowrap}
+.idea-source-devpost{background:#e0f2f1}
+.idea-source-yc{background:#fff1e0}
+.idea-source-github{background:#eceef8}
+.idea-source-producthunt{background:var(--accent-soft)}
+.idea-standout{padding-left:20px}
+.idea-standout li{margin:6px 0}
+.idea-more{margin-top:24px}
+.idea-more summary{cursor:pointer;font-weight:600}
+.idea-more .idea-matches{margin-top:12px}
+.idea-sources,.idea-note{color:var(--muted);font-size:.9rem;margin-top:20px}
+.idea-sources .off{text-decoration:line-through}
+@media (max-width:600px){.idea-verdict{flex-direction:column;align-items:flex-start}.idea-score{text-align:left}}

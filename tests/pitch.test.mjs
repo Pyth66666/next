@@ -9,7 +9,10 @@ test('ten visual slides export as self-contained deck without invented figures o
  const p={answers:['<img src=x onerror=alert(1)>'],pitch:{startup:{slides:{market:{headline:'A real market question',answers:{tam:'RM 10m sourced',sam:'',som:''}},traction:{headline:'No users yet',answers:{metrics:'No revenue yet'}}}}}};
  const html=deckHtml(p,'startup','.deck-canvas{color:red}');
  assert.equal((html.match(/class="deck-canvas /g)||[]).length,10);
- assert.match(html,/deck-circle tam/);assert.match(html,/deck-gtm-path/);assert.match(html,/deck-ask-ring/);
+ // Market size is three conceptual circles, go-to-market a four-step path, the ask a single ring.
+ assert.equal((slideCanvas(p,'startup','market').match(/deck-circle/g)||[]).length,3);
+ assert.match(slideCanvas(p,'startup','gtm'),/Reach[\s\S]*Try[\s\S]*Adopt[\s\S]*Keep/);
+ assert.equal((slideCanvas(p,'startup','ask').match(/deck-circle/g)||[]).length,1);
  assert.match(html,/Conceptual circles/);assert.match(html,/No growth chart is drawn/);
  assert.ok(!html.includes('<img src=x onerror=alert(1)>'));
  assert.match(html,/&lt;img src=x onerror=alert\(1\)&gt;/);
