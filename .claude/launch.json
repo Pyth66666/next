@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "apexelerate",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["local-server.mjs"],
+      "env": { "ADMIN_EMAILS": "tester@apex.test" },
+      "port": 4174,
+      "url": "http://localhost:4174"
+    }
+  ]
+}

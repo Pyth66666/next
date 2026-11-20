@@ -132,6 +132,8 @@ export function slideScene(project,track,def,d,index){
    if(hasData){chart(rows,64,y,740,310,d.presentation.unit);paragraph('Validation',copy('validation'),860,y,356,190);paragraph('Period + next',copy('period'),860,500,356,110);}
    else if(alt){steps(['metrics','validation','period'].map((key,i)=>`${['Measured','Validated','Next'][i]}\n${copy(key)}`),64,y,1152,310,true);}
    else ['metrics','validation','period'].forEach((key,i)=>block(['Measured','Validated','When + next'][i],copy(key),64+i*393,y,365,300));
+   // Never imply growth the founder has not measured.
+   if(!hasData)text('No growth chart is drawn without dated time-series data.',64,617,1152,22,16,{color:muted});
    break;
   case 'competition':
    if(alt){paragraph('The alternatives',copy('alternatives'),64,y,1152,125);block('Customer criteria',copy('criteria'),64,455,550,165);block('Possible advantage',copy('advantage'),666,455,550,165);}
