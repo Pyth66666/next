@@ -6,7 +6,7 @@
   "functions": {
     "api/index.mjs": {
       "maxDuration": 120,
-      "includeFiles": ["public/**","shared/**"]
+      "includeFiles": "{public,shared}/**"
     }
   },
   "rewrites": [

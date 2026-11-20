@@ -14,6 +14,8 @@ test('ten visual slides export as self-contained deck without invented figures o
  assert.match(slideCanvas(p,'startup','gtm'),/Reach[\s\S]*Try[\s\S]*Adopt[\s\S]*Keep/);
  assert.equal((slideCanvas(p,'startup','ask').match(/deck-circle/g)||[]).length,1);
  assert.match(html,/Conceptual circles/);assert.match(html,/No growth chart is drawn/);
+ const slide=id=>html.match(new RegExp(`deck-canvas deck-${id} [\\s\\S]*?</article>`))[0];
+ assert.match(slide('traction'),/No revenue yet/);assert.doesNotMatch(slide('traction'),/<svg|<polyline|deck-chart/);
  assert.ok(!html.includes('<img src=x onerror=alert(1)>'));
  assert.match(html,/&lt;img src=x onerror=alert\(1\)&gt;/);
  assert.match(slideCanvas(p,'startup','market'),/RM 10m sourced/);
