@@ -4,7 +4,7 @@ import {problemAreas,briefSteps,setStepValue,stepValue} from '../public/brief-fl
 
 test('normal questions branch by problem area and keep free-text answers editable',()=>{
  const p={problemArea:'student',briefDepth:'normal',answers:Array(5).fill('')};
- assert.equal(problemAreas.length,6);
+ assert.equal(problemAreas.filter(a=>a.group!=='track').length,6);assert.equal(problemAreas.filter(a=>a.group==='track').length,7);
  const student=briefSteps(p);
  assert.equal(student.length,5);
  assert.match(student[0].suggestions.join(' '),/tutor|study/i);

@@ -67,3 +67,33 @@ test('idea check route needs sign-in and returns a verdict',async t=>{
  assert.equal(out.verdict,'crowded');assert.ok(out.matches.length);
  assert.equal((await call('/api/idea-check',{idea:''})).status,400);
 });
+
+import {brainstormIdeas} from '../backend/idea-check.mjs';
+import {tracks,trackById,trackContext} from '../shared/industry-tracks.js';
+import {problemAreas,briefSteps} from '../public/brief-flow.js';
+
+test('the 7 industry tracks are complete and appear as brief starting points',()=>{
+ assert.deepEqual(tracks.map(t=>t.label),['Customer Experience & Support','Operations & Productivity','Marketing & Content','Data & Decision-Making','Sustainability & ESG','Finance & Accounting','Logistics & Supply Chain']);
+ for(const t of tracks){assert.ok(t.problems.length>=6&&t.ideas.length>=5&&t.users.length&&t.data.length&&t.judging.length,t.id);assert.match(trackContext(t),new RegExp(t.label.replace(/[&]/g,'.')));}
+ assert.ok(problemAreas.some(a=>a.id==='esg'&&a.group==='track'));
+ const steps=briefSteps({problemArea:'logistics',answers:Array(5).fill('')});
+ assert.equal(steps[0].suggestions[0],trackById('logistics').problems[0]);assert.deepEqual(steps[1].suggestions,trackById('logistics').mvp);
+});
+
+test('idea check uses the track as grounding and returns suggested stronger versions',async()=>{
+ resetYcCache();const net=fakeNet(),calls=[];
+ const ai=async(system,user)=>{calls.push(user);return {text:JSON.stringify({verdict:'crowded',originality:40,summary:'Several exist.',closest:[],standOut:['Focus on clinics'],suggestions:[{title:'Clinic inbox',idea:'A shared inbox for small clinics that assigns every WhatsApp message an owner.',why:'Narrower audience.'},{title:'',idea:'  '}]}),model:'m',usage:null};};
+ const r=await checkIdea({idea:IDEA,track:'cx',ai,github:net.github,fetcher:net.fetcher});
+ assert.match(calls[0],/Industry track: Customer Experience & Support/);
+ assert.equal(r.track,'cx');assert.equal(r.suggestions.length,1);assert.equal(r.suggestions[0].title,'Clinic inbox');
+ resetYcCache();const plain=await checkIdea({idea:IDEA,ai,github:net.github,fetcher:net.fetcher});assert.equal(plain.track,null);assert.doesNotMatch(calls[1],/Industry track/);
+});
+
+test('brainstormer needs a track or interest, grounds on the track and keeps only usable ideas',async()=>{
+ const calls=[];const ai=async(system,user)=>{calls.push(user);return {text:JSON.stringify({ideas:[{title:'Expiry alert',problem:'Food expires',who:'Grocers',solution:'Flag stock near expiry.',firstVersion:'One shelf',whyItFits:'Cuts waste'},{title:'Empty',solution:''}]}),model:'m',usage:null};};
+ await assert.rejects(brainstormIdeas({ai}),e=>e.status===400);
+ const r=await brainstormIdeas({track:'logistics',interest:'groceries',ai});
+ assert.match(calls[0],/Logistics & Supply Chain/);assert.match(calls[0],/groceries/);
+ assert.equal(r.ideas.length,1);assert.equal(r.ideas[0].title,'Expiry alert');
+ await assert.rejects(brainstormIdeas({track:'cx',ai:async()=>({text:'{"ideas":[]}'})}),e=>e.status===502);
+});
