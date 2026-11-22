@@ -1,6 +1,8 @@
 import {detailQuestions} from '../shared/engine.js';
 
-export const problemAreas=[
+import {tracks} from '../shared/industry-tracks.js';
+
+const everyday=[
  {id:'student',label:'Student life',icon:'✦',examples:['Finding a tutor or study group','Keeping group projects on track','Finding internships and opportunities']},
  {id:'business',label:'Small business',icon:'↗',examples:['Handling bookings and customers','Tracking orders or inventory','Reaching new customers']},
  {id:'team',label:'Teams and work',icon:'⌘',examples:['Handoffs between people','Keeping tasks visible','Collecting requests in one place']},
@@ -8,6 +10,8 @@ export const problemAreas=[
  {id:'personal',label:'Everyday life',icon:'◌',examples:['Managing a routine','Sharing useful local information','Planning with friends or family']},
  {id:'other',label:'Something else',icon:'✳',examples:['A problem I see around me','A new way to make something easier','My own idea']}
 ];
+// Industry challenge tracks: same shape, examples taken from each track's real pain points.
+export const problemAreas=[...everyday,...tracks.map(t=>({id:t.id,label:t.label,icon:t.icon,group:'track',examples:t.problems.slice(0,3)}))];
 
 const normal=[
  {label:'The problem',question:'What is the problem, and what would you build to help?',hint:'Tell us the situation and your app idea in your own words. You can start with a common problem below.',placeholder:'People in my community struggle to… I would build…'},
@@ -32,6 +36,7 @@ const normalChoices={
  personal:[[],['Track one routine and see progress','Plan a shared activity without losing details','Find the next useful action'],['Just me for now','Friends and family','A small local group'],['Private by default; simple to maintain','Phone first; no account initially'],['Open; add an item; check it; see what is next']],
  other:[[],['Complete one task with less effort','See important information in one place','Help someone make a better decision'],['The person with the problem and an admin','One small group first','Just me, to test it'],['Start with one core feature','Use low-cost tools and keep data minimal'],['Start; do the main action; get a useful result; recover from an error']]
 };
+for(const t of tracks)normalChoices[t.id]=[[],t.mvp,t.roles,['Works on a phone; no payments in version one','Uses data the team already has; launch in two weeks'],['Open; do the main action; see the result; recover if a step fails']];
 const detailedChoices={
  student:['A student misses an important opportunity because information is scattered. I would build…','A group project loses track of decisions. I would build…'],
  business:['A customer abandons a booking because confirmation takes too long. I would build…','An owner cannot see which order needs attention. I would build…'],
@@ -40,6 +45,8 @@ const detailedChoices={
  personal:['A recurring task falls through because there is no simple reminder. I would build…'],
  other:['When a person tries to complete the task, the current workaround fails because… I would build…']
 };
+
+for(const t of tracks)detailedChoices[t.id]=t.problems.slice(0,2).map(p=>`${p}. I would build…`);
 
 export function briefSteps(project){
  const area=problemAreas.find(x=>x.id===project.problemArea)||problemAreas.at(-1);
