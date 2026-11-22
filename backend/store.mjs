@@ -21,6 +21,7 @@ export const schema=` CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email
  CREATE TABLE IF NOT EXISTS plans(user_id TEXT PRIMARY KEY REFERENCES users(id),plan TEXT NOT NULL,updated BIGINT NOT NULL);
  CREATE TABLE IF NOT EXISTS ai_usage(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,credits INTEGER NOT NULL,prompt_tokens INTEGER NOT NULL,completion_tokens INTEGER NOT NULL,created BIGINT NOT NULL);
  CREATE INDEX IF NOT EXISTS ai_usage_user ON ai_usage(user_id,created);
+ CREATE TABLE IF NOT EXISTS scan_locks(user_id TEXT PRIMARY KEY REFERENCES users(id),expires BIGINT NOT NULL);
  CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires BIGINT NOT NULL);
  CREATE INDEX IF NOT EXISTS session_expiry ON sessions(expires);
  CREATE INDEX IF NOT EXISTS conversation_history ON conversations(repo_id,user_id,created);

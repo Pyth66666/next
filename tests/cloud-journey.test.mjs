@@ -24,6 +24,7 @@ test('website completes account, server save, real source tutor and quiz journey
   await import('../public/app.js');await until(()=>document.querySelector('[data-account-link]'));
   location.hash='repositories';await until(()=>document.querySelector('#account-form'));
   fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));assert.ok(document.querySelector('#upload-form'),'Upload is offered before GitHub');
+  store.db.prepare('INSERT INTO plans VALUES(?,?,?)').run(store.db.prepare('SELECT id FROM users').get().id,'basic',Date.now());
   assert.equal(location.hash,'#repositories');assert.equal(document.querySelector('[data-admin-nav]'),null);
   location.hash='dashboard';await until(()=>document.querySelector('#studio-projects'));
   click('[data-action=new]');await until(()=>document.querySelector('[data-problem-area]'));click('[data-problem-area=business]');click('[data-action=next]');await until(()=>document.querySelector('#answer'));
@@ -47,6 +48,7 @@ test('website completes account, server save, real source tutor and quiz journey
   location.hash=`pitch/${projectId}/hackathon/title`;await until(()=>document.querySelector('#pitch-headline')?.value==='');fill('#pitch-headline','Our hackathon demo');
   await until(()=>JSON.parse(store.db.prepare('SELECT data FROM projects').get().data).pitch?.hackathon?.slides.title.headline==='Our hackathon demo');
   location.hash='repositories';await until(()=>document.querySelector('#repository-form'));fill('#repository-name','https://github.com/demo/mvp');submit('#repository-form');
+  store.db.prepare('DELETE FROM plans').run(); // back to waiting for approval for the next checks
   // Opening an app shows its overview at once: no scan choice, no waiting.
   await until(()=>document.querySelector('.learn-overview'));assert.match(document.querySelector('.learn-stack').textContent,/JavaScript/);assert.ok(document.querySelector('[data-learn-part=frontend]'));
   // A not-yet-approved account can still read its code; only the AI explanation waits for approval.

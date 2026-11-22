@@ -62,7 +62,7 @@ test('idea check route needs sign-in and returns a verdict',async t=>{
  let cookie='',csrf='';
  const call=async(path,data)=>{const r=await fetch(base+path,{method:'POST',headers:{Origin:config.origin,'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:JSON.stringify(data)});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return r;};
  assert.equal((await call('/api/idea-check',{idea:IDEA})).status,403);
- const reg=await call('/api/auth/register',{email:'idea@example.com',password:'a strong password'});assert.equal(reg.status,200);csrf=(await reg.json()).csrf;
+ const reg=await call('/api/auth/register',{email:'idea@example.com',password:'a strong password'});assert.equal(reg.status,200);const regBody=await reg.json();csrf=regBody.csrf;app.store.db.prepare('INSERT INTO plans VALUES(?,?,?)').run(regBody.user.id,'basic',Date.now());
  const r=await call('/api/idea-check',{idea:IDEA});assert.equal(r.status,200);const out=await r.json();
  assert.equal(out.verdict,'crowded');assert.ok(out.matches.length);
  assert.equal((await call('/api/idea-check',{idea:''})).status,400);

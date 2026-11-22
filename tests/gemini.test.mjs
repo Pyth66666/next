@@ -15,7 +15,7 @@ test('Gemini is the default even if old NVIDIA credentials remain configured',()
 
 function awaitInvalidProvider(){
  const config=configuration({AI_PROVIDER:'unknown',GEMINI_API_KEY:'fixture-secret'});
- assert.equal(config.aiConfigurationError,'AI_PROVIDER must be gemini or nvidia.');
+ assert.equal(config.aiConfigurationError,'AI_PROVIDER must be gemini, nvidia or anthropic.');
  assert.equal(config.provider,null);
 }
 

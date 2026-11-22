@@ -25,17 +25,21 @@ const safeNext=v=>typeof v==='string'&&/^#[a-zA-Z0-9/_-]{0,80}$/.test(v)?v:'#das
 
 export function socialLogin({config,db,store,service,hash,scrypt,newSession}){
  const callbackUrl=p=>`${config.origin}/api/auth/${p}/callback`;
- const fail=(res,code)=>{res.writeHead(302,{Location:`/?login_error=${code}#account`});res.end();};
+ const fail=(res,code)=>{res.writeHead(302,{Location:`/?login_error=${code}#account`,'Set-Cookie':browserCookie('',0)});res.end();};
+ // The state is tied to a random value in this browser's cookie, so a sign-in link
+ // started by someone else can't log this browser into their account.
+ const browserCookie=(v,age)=>`apex_oauth=${v}; Path=/api/auth; HttpOnly; SameSite=Lax; Max-Age=${age}${config.secure?'; Secure':''}`;
+ const browserValue=req=>req?.headers.cookie?.split(';').map(s=>s.trim()).find(s=>s.startsWith('apex_oauth='))?.slice(11)||'';
 
- async function start(provider,url,res){
+ async function start(provider,url,res,req){
   const p=PROVIDERS[provider];if(!loginProviders(config).includes(provider))throw new ApiError(503,`Sign in with ${provider} is not switched on.`);
-  const state=randomBytes(32).toString('hex'),verifier=randomBytes(32).toString('base64url');
+  const state=randomBytes(32).toString('hex'),verifier=randomBytes(32).toString('base64url'),nonce=randomBytes(24).toString('hex');
   await db.prepare('DELETE FROM login_states WHERE expires<?').run(Date.now());
-  await db.prepare('INSERT INTO login_states VALUES(?,?,?,?,?)').run(hash(state),provider,verifier,safeNext(url.searchParams.get('next')),Date.now()+600000);
+  await db.prepare('INSERT INTO login_states VALUES(?,?,?,?,?)').run(hash(state+':'+nonce),provider,verifier,safeNext(url.searchParams.get('next')),Date.now()+600000);
   const auth=new URL(p.authorize);
   auth.search=new URLSearchParams({client_id:p.id(config),redirect_uri:callbackUrl(provider),response_type:'code',scope:p.scope,state,
    code_challenge:Buffer.from(hash(verifier),'hex').toString('base64url'),code_challenge_method:'S256',...(provider==='google'?{prompt:'select_account'}:{})}).toString();
-  res.writeHead(302,{Location:auth.href});res.end();
+  res.writeHead(302,{Location:auth.href,'Set-Cookie':browserCookie(nonce,600)});res.end();
  }
 
  async function exchange(provider,code,verifier){
@@ -70,9 +74,9 @@ export function socialLogin({config,db,store,service,hash,scrypt,newSession}){
   return user;
  }
 
- async function callback(provider,url,res){
+ async function callback(provider,url,res,req){
   if(!PROVIDERS[provider])throw new ApiError(404,'Not found.');
-  const row=await db.prepare('DELETE FROM login_states WHERE state=? AND provider=? AND expires>? RETURNING *').get(hash(url.searchParams.get('state')||''),provider,Date.now());
+  const row=await db.prepare('DELETE FROM login_states WHERE state=? AND provider=? AND expires>? RETURNING *').get(hash((url.searchParams.get('state')||'')+':'+browserValue(req)),provider,Date.now());
   if(!row)return fail(res,'expired');
   const code=url.searchParams.get('code');if(!code)return fail(res,'cancelled');
   let token,who;
@@ -82,6 +86,7 @@ export function socialLogin({config,db,store,service,hash,scrypt,newSession}){
   // Signing in with GitHub also connects GitHub for importing projects.
   if(provider==='github'&&who.login)await db.prepare('INSERT INTO github VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET token=excluded.token,login=excluded.login').run(user.id,store.encrypt(token),who.login);
   await newSession(res,user);
+  res.appendHeader('Set-Cookie',browserCookie('',0));
   res.writeHead(302,{Location:'/'+row.next});res.end();
  }
 

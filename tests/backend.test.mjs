@@ -20,7 +20,7 @@ async function fixture(t){
  const config={...configuration({}),dataDir,port:0,githubId:'fixture-client',githubSecret:'fixture-secret'};const app=createApplication({config,providers:service});
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${app.server.address().port}`;
  t.after(async()=>{await new Promise(r=>app.server.close(r));app.store.db.close();rmSync(dataDir,{recursive:true,force:true});});
- function client(){let cookie='',csrf='';return {async request(path,method='GET',data,headers={}){const response=await fetch(base+path,{method,redirect:'manual',headers:{Origin:config.origin,...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{}),...(data?{'Content-Type':'application/json'}:{}),...headers},...(data?{body:JSON.stringify(data)}:{})});if(response.headers.get('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];const content=await response.text();let value;try{value=JSON.parse(content);}catch{value=content;}if(value?.csrf)csrf=value.csrf;return {status:response.status,value,headers:response.headers};},async register(email='one@example.com'){return this.request('/api/auth/register','POST',{email,password:'  long password  '});}};}
+ function client(){let cookie='',csrf='';return {async request(path,method='GET',data,headers={}){const response=await fetch(base+path,{method,redirect:'manual',headers:{Origin:config.origin,...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{}),...(data?{'Content-Type':'application/json'}:{}),...headers},...(data?{body:JSON.stringify(data)}:{})});if(response.headers.get('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];const content=await response.text();let value;try{value=JSON.parse(content);}catch{value=content;}if(value?.csrf)csrf=value.csrf;return {status:response.status,value,headers:response.headers};},async register(email='one@example.com',approve=true){const r=await this.request('/api/auth/register','POST',{email,password:'  long password  '});if(approve&&r.value?.user)app.store.db.prepare('INSERT INTO plans VALUES(?,?,?) ON CONFLICT(user_id) DO NOTHING').run(r.value.user.id,'basic',Date.now());return r;}};}
  return {app,client,calls,setBadQuiz:()=>badQuiz=true,setBadPlan:()=>badPlan=true};
 }
 
@@ -107,7 +107,7 @@ test('detailed brief mode and optional answers persist with validation',async t=
 });
 
 test('import, source analysis, tutoring, quiz grading and server-owned progress',async t=>{
- const f=await fixture(t),a=f.client(),b=f.client();await a.register();await b.register('two@example.com');
+ const f=await fixture(t),a=f.client(),b=f.client();await a.register('one@example.com',false);await b.register('two@example.com');
  const imported=await a.request('/api/repositories','POST',{repository:'demo/mvp'});assert.equal(imported.status,201);const id=imported.value.id;
  assert.equal(imported.value.files.length,1);assert.equal(imported.value.commit,'commit123456');assert.ok(!f.calls.some(c=>c.path?.endsWith('/secret')));
  const file=await a.request(`/api/repositories/${id}/file?path=src/app.js`);assert.match(file.value.content,/REDACTED/);assert.ok(!file.value.content.includes('private-secret'));
