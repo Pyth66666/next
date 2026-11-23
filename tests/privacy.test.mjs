@@ -25,7 +25,7 @@ test('browser projects move into one account and are not shared with the next us
  const fill=(s,v)=>{const el=document.querySelector(s);assert.ok(el,s);el.value=v;el.dispatchEvent(new window.Event('input',{bubbles:true}));};const submit=s=>document.querySelector(s).dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
  const local=()=>JSON.parse(window.localStorage.getItem('apexelerate.projects.v1')||'[]');
  const owners=()=>store.db.prepare('SELECT p.id,u.email FROM projects p JOIN users u ON u.id=p.user_id').all();
- const register=async email=>{location.hash='repositories';await until(()=>document.querySelector('#account-form'));fill('[name=email]',email);fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));};
+ const register=async email=>{location.hash='repositories';await until(()=>document.querySelector('#account-form'));document.querySelector('[role=tab][data-auth-mode=register]').click();fill('[name=email]',email);fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));};
  try{
   await import('../public/app.js');await until(()=>document.querySelector('[data-account-link]'));
   await register('first@example.com');
