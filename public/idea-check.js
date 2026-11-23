@@ -59,7 +59,7 @@ export function createIdeaCheck({app,header,esc,toast,cloud}){
    <section class="idea-check"><h2>Check an idea</h2>
     <form id="idea-form" class="idea-form"><label for="idea-text">Your idea</label>
      <textarea id="idea-text" name="idea" rows="4" maxlength="2000" required placeholder="Example: A shared inbox that collects WhatsApp and Instagram messages for small clinics, with an owner for each."></textarea>
-     <p class="idea-hint">Say what it does and who it is for.</p>
+     <p class="idea-hint">Say what it does and who it is for. Ideas you check and brainstorm are saved to your account, and the site owner can see them.</p>
      <p class="form-feedback error" role="alert"></p>
      <button class="button dark" type="submit">Check my idea</button>
     </form>

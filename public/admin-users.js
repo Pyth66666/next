@@ -18,7 +18,7 @@ function bindPlans(root,api){
 }
 
 export async function adminUsersPage({app,header,esc,api,nav}){
- app.innerHTML=`${header(true)}<main class="account-page wrap admin-users"><div class="eyebrow">ADMIN</div><h1>Users</h1><div id="admin-users">Loading…</div></main>`;nav();
+ app.innerHTML=`${header(true)}<main class="account-page wrap admin-users"><div class="eyebrow">ADMIN</div><h1>Users</h1><p><a class="button light" href="#admin/activity">See everyone’s activity →</a></p><div id="admin-users">Loading…</div></main>`;nav();
  const box=app.querySelector('#admin-users');
  try{
   const users=await api('/api/admin/users');if(location.hash!=='#admin/users')return;
