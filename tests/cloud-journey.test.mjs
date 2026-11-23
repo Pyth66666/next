@@ -22,7 +22,7 @@ test('website completes account, server save, real source tutor and quiz journey
  const click=s=>{const el=document.querySelector(s);assert.ok(el,s);el.click();};const fill=(s,v)=>{const el=document.querySelector(s);assert.ok(el,s);el.value=v;el.dispatchEvent(new window.Event('input',{bubbles:true}));};const submit=s=>document.querySelector(s).dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
  try{
   await import('../public/app.js');await until(()=>document.querySelector('[data-account-link]'));
-  location.hash='repositories';await until(()=>document.querySelector('#account-form'));
+  location.hash='repositories';await until(()=>document.querySelector('#account-form'));click('[role=tab][data-auth-mode=register]');
   fill('[name=email]','builder@example.com');fill('[name=password]','a strong password');submit('#account-form');await until(()=>document.querySelector('#repository-form'));assert.ok(document.querySelector('#upload-form'),'Upload is offered before GitHub');
   store.db.prepare('INSERT INTO plans VALUES(?,?,?)').run(store.db.prepare('SELECT id FROM users').get().id,'basic',Date.now());
   assert.equal(location.hash,'#repositories');assert.equal(document.querySelector('[data-admin-nav]'),null);
