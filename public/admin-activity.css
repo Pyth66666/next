@@ -1,0 +1,23 @@
+/* Admin activity (#admin/activity) */
+.admin-activity .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.activity-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 8px}
+.activity-tools input{font:inherit;padding:9px 12px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface);color:var(--ink);min-width:200px}
+.activity-groups{display:flex;flex-wrap:wrap;gap:6px}
+.activity-groups button{font:inherit;font-size:.9rem;padding:8px 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+.activity-groups button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.activity-tools .button{margin-left:auto}
+.activity-count{color:var(--muted);font-size:.9rem;min-height:1.2em}
+.activity-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.activity-item details{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.activity-item summary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer;list-style:none}
+.activity-item summary::-webkit-details-marker{display:none}
+.activity-item details[open] summary{border-bottom:1px solid var(--line)}
+.activity-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.activity-meta{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.activity-kind{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft);white-space:nowrap}
+.activity-idea-check,.activity-idea-brainstorm{background:#fff1e0}
+.activity-app-added,.activity-file-explained,.activity-tutor-question{background:#e0f2f1}
+.activity-project,.activity-pitch{background:#eceef8}
+.activity-item pre{margin:0;padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 var(--sans);max-height:420px;overflow:auto}
+.activity-empty{color:var(--muted);padding:14px}
+@media (max-width:700px){.activity-item summary{grid-template-columns:1fr}.activity-meta{white-space:normal}.activity-tools .button{margin-left:0}.activity-tools input{min-width:0;width:100%}}

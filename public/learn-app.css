@@ -91,3 +91,4 @@
 .add-app>summary::before{content:'+';font-size:1.2rem;line-height:1;color:var(--accent)}
 .add-app[open]>summary::before{content:'−'}
 .add-app[open]>summary{margin-bottom:16px}
+

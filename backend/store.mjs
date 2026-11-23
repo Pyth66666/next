@@ -25,7 +25,9 @@ export const schema=` CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email
  CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires BIGINT NOT NULL);
  CREATE INDEX IF NOT EXISTS session_expiry ON sessions(expires);
  CREATE INDEX IF NOT EXISTS conversation_history ON conversations(repo_id,user_id,created);
- CREATE INDEX IF NOT EXISTS rate_limit_expiry ON rate_limits(expires);`;
+ CREATE INDEX IF NOT EXISTS rate_limit_expiry ON rate_limits(expires);
+ CREATE TABLE IF NOT EXISTS activity(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,created BIGINT NOT NULL,data TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS activity_user ON activity(user_id,created);`;
 // Queries are internal literals; user values remain separately bound parameters.
 export function postgresQuery(sql){let n=0;return sql.replace(/\?/g,()=>`$${++n}`);}
 // The '?' -> '$n' rewrite assumes every '?' is a placeholder. A literal '?' added
