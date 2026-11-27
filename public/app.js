@@ -11,6 +11,7 @@ import {createStudio} from './studio.js';
 import {createCloud} from './cloud.js';
 import {createPitch} from './pitch.js';
 import {createIdeaCheck} from './idea-check.js';
+import {createShowcase} from './showcase.js';
 import {createProjectLoop} from './project-loop.js';
 import {projectName} from '../shared/studio-data.js';
 const app=document.querySelector('#app');let projects=[];let storageOK=true;try{const raw=JSON.parse(localStorage.getItem('apexelerate.projects.v1')||'[]');projects=Array.isArray(raw)?raw.filter(p=>p&&typeof p.id==='string'&&Array.isArray(p.answers)&&Array.isArray(p.tasks)):[];}catch{storageOK=false;}
@@ -43,6 +44,7 @@ save=()=>{for(const p of projects){const value=JSON.stringify([p.name,p.answers,
 cloud=createCloud({app,header,esc,toast,getProjects:()=>projects,setProjects:data=>{projects=data;active=null;},getActive:()=>active,save:()=>save(),renderCurrent:()=>route(),onDemo:data=>experience.setDemo(data)});
 const pitch=createPitch({app,header,esc,toast,getProjects:()=>projects,save:()=>save(),cloud});
 const ideaCheck=createIdeaCheck({app,header,esc,toast,cloud});
+const showcase=createShowcase({app,header,esc,toast,cloud});
 const projectLoop=createProjectLoop({app,esc,toast,getActive:()=>active,save:()=>save(),cloud});
 const gui=installGuidedUI({app,header,esc,getProjects:()=>projects,getActive:()=>active,cloud});
 home=()=>{gui.home();cloud.nav();pitch.nav();};
@@ -85,6 +87,6 @@ dashboard=()=>{studio.dashboard();cloud.nav();pitch.nav();};
 const originalNewProject=newProject;
 newProject=(type)=>originalNewProject(type||'mvp');
 const originalRoute=route;
-route=()=>{if(ideaCheck.route()){pitch.nav();return;}if(pitch.route())return;if(cloud.route()){pitch.nav();return;}if(!experience.route())originalRoute();cloud.nav();pitch.nav();};
+route=()=>{if(ideaCheck.route()||showcase.route()){pitch.nav();return;}if(pitch.route())return;if(cloud.route()){pitch.nav();return;}if(!experience.route())originalRoute();cloud.nav();pitch.nav();};
 window.addEventListener('hashchange',route);route();
 if(typeof window.fetch==='function')cloud.init();

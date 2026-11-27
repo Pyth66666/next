@@ -7,9 +7,9 @@ import {randomUUID} from 'node:crypto';
 export const KINDS={
  'idea-check':'Idea check','idea-brainstorm':'Idea brainstorm',
  'app-added':'App added','file-explained':'File explained','tutor-question':'Tutor question',
- 'project':'Project','pitch':'Pitch'
+ 'project':'Project','pitch':'Pitch','showcase':'Showcase post'
 };
-const GROUPS={ideas:['idea-check','idea-brainstorm'],learn:['app-added','file-explained','tutor-question'],projects:['project','pitch']};
+const GROUPS={ideas:['idea-check','idea-brainstorm'],learn:['app-added','file-explained','tutor-question'],projects:['project','pitch','showcase']};
 const parse=v=>{try{return JSON.parse(v);}catch{return {};}};
 const clip=(s,n)=>String(s??'').replace(/\s+/g,' ').trim().slice(0,n);
 
@@ -69,6 +69,7 @@ export function activityLog({db}){
    add(r.user_id,'project',p.updated||p.created,name,projectText(p));
    const pitch=pitchText(p);if(pitch)add(r.user_id,'pitch',p.updated||p.created,name,pitch);
   }
+  for(const r of await db.prepare('SELECT user_id,status,created,data FROM showcase').all()){const d=parse(r.data);add(r.user_id,'showcase',r.created,d.title,[`Status: ${r.status}`,d.summary,d.stack?.length&&`Stack: ${d.stack.join(', ')}`,d.liveUrl,d.sourceUrl,d.videoUrl,d.description].filter(Boolean).join('\n'));}
 
   const kinds=kind?[kind]:GROUPS[group]||null,needle=q.trim().toLowerCase(),who=user.trim().toLowerCase();
   return items
