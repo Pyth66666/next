@@ -18,6 +18,7 @@ import {checkIdea,brainstormIdeas} from './idea-check.mjs';
 import {trackById,trackContext} from '../shared/industry-tracks.js';
 import {explainFile} from './file-explain.mjs';
 import {activityLog,ideaCheckRecord,brainstormRecord,toCsv} from './activity.mjs';
+import {showcaseStore} from './showcase.mjs';
 import {appMap,fileFacts,partOf} from '../shared/app-map.js';
 import {runScan} from './code-tour.mjs';
 import {scanGroups} from '../shared/scan-groups.js';
@@ -32,7 +33,7 @@ async function body(req,max=450000){let n=0,s='';if(req.body!==undefined){s=type
 export function createApplication(options={}){
  const config=options.config||configuration(),store=options.store||createStore(config),{db}=store,service=options.providers||providers(config,options.fetcher),limits=new Map();
  const adminEmail=email=>!!email&&(config.adminEmails||[]).includes(String(email).toLowerCase());
- const isAdmin=(id,email)=>(config.adminUserIds||[]).includes(id)||adminEmail(email),plans=plansStore({db,isAdmin,defaultPlan:config.defaultPlan}),admin=adminUsers({db,plans}),activity=activityLog({db});
+ const isAdmin=(id,email)=>(config.adminUserIds||[]).includes(id)||adminEmail(email),plans=plansStore({db,isAdmin,defaultPlan:config.defaultPlan}),admin=adminUsers({db,plans}),activity=activityLog({db}),showcase=showcaseStore({db});
  const owned=async (table,id,user)=>{const row=(await db.prepare(`SELECT * FROM ${table} WHERE id=? AND user_id=?`).get(id,user));if(!row)throw new ApiError(404,'This item was not found.');return row;};
  const repoFor=async (id,user)=>JSON.parse((await owned('repositories',id,user)).data);
  const tokenFor=async user=>{const r=(await db.prepare('SELECT token FROM github WHERE user_id=?').get(user));return r?store.decrypt(r.token):null;};
@@ -95,7 +96,17 @@ export function createApplication(options={}){
  if(path==='/api/auth/forgot'&&method==='POST')return forgotPassword(req,res);
  const lm=path.match(/^\/api\/auth\/(google|github)\/(start|callback)$/);if(lm&&method==='GET'){await rate(`login:${clientKey(req)}`,30,900000);return lm[2]==='start'?social.start(lm[1],url,res,req):social.callback(lm[1],url,res,req);}
  if(path==='/api/auth/reset'&&method==='POST')return resetPassword(req,res);
+ // Showcase: the gallery, approved posts and their screenshots are public.
+ if(path==='/api/showcase'&&method==='GET')return json(res,200,await showcase.gallery());
+ const si=path.match(/^\/api\/showcase\/images\/([0-9a-f-]{36})$/);if(si&&method==='GET'){const img=await showcase.image(si[1],s?.user_id,!!s&&isAdmin(s.user_id,s.email));res.writeHead(200,{'Content-Type':img.mime,'Content-Length':img.body.length,'Cache-Control':img.public?'public, max-age=86400':'private, no-store'});res.end(img.body);return;}
+ const sp=path.match(/^\/api\/showcase\/([0-9a-f-]{36})$/);if(sp&&method==='GET')return json(res,200,await showcase.one(sp[1],s?.user_id,!!s&&isAdmin(s.user_id,s.email)));
  if(!s)throw new ApiError(401,'Sign in to continue.');const user=s.user_id;
+ if(path==='/api/showcase/mine'&&method==='GET')return json(res,200,await showcase.mine(user));
+ if(path==='/api/showcase/review'&&method==='GET'){if(!isAdmin(user,s.email))throw new ApiError(403,'Administrator access required.');return json(res,200,await showcase.queue(url.searchParams.get('status')||'pending'));}
+ if(path==='/api/showcase/images'&&method==='POST'){await rate(`showcase-img:${user}`,40,3600000);return json(res,201,await showcase.uploadImage(user,await body(req,2200000)));}
+ if(path==='/api/showcase'&&method==='POST'){await rate(`showcase:${user}`,10,3600000);return json(res,201,await showcase.submit(user,await body(req),{admin:isAdmin(user,s.email)}));}
+ const sr=path.match(/^\/api\/showcase\/([0-9a-f-]{36})\/review$/);if(sr&&method==='POST'){if(!isAdmin(user,s.email))throw new ApiError(403,'Administrator access required.');const b=await body(req);return json(res,200,await showcase.review(sr[1],b.status,b.note));}
+ if(sp&&method==='DELETE'){await showcase.remove(sp[1],user,isAdmin(user,s.email));return json(res,200,{ok:true});}
  // Every AI call below is logged with its token use, for the admin usage view.
  const ai=async(...a)=>{const cap=await plans.aiAllowance(user,s.email);await rate(`ai-day:${user}`,cap,86400000);const r=await service.ai(...a);await plans.record(user,usageKind(path),r.usage);return r;},tracked={...service,ai};
  if(path==='/api/plan'&&method==='GET')return json(res,200,await plans.status(user,s.email));

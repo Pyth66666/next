@@ -27,7 +27,11 @@ export const schema=` CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email
  CREATE INDEX IF NOT EXISTS conversation_history ON conversations(repo_id,user_id,created);
  CREATE INDEX IF NOT EXISTS rate_limit_expiry ON rate_limits(expires);
  CREATE TABLE IF NOT EXISTS activity(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,created BIGINT NOT NULL,data TEXT NOT NULL);
- CREATE INDEX IF NOT EXISTS activity_user ON activity(user_id,created);`;
+ CREATE INDEX IF NOT EXISTS activity_user ON activity(user_id,created);
+ CREATE TABLE IF NOT EXISTS showcase(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),status TEXT NOT NULL,created BIGINT NOT NULL,updated BIGINT NOT NULL,data TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS showcase_status ON showcase(status,created);
+ CREATE TABLE IF NOT EXISTS showcase_images(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),project_id TEXT,created BIGINT NOT NULL,mime TEXT NOT NULL,data TEXT NOT NULL);
+ CREATE INDEX IF NOT EXISTS showcase_image_project ON showcase_images(project_id);`;
 // Queries are internal literals; user values remain separately bound parameters.
 export function postgresQuery(sql){let n=0;return sql.replace(/\?/g,()=>`$${++n}`);}
 // The '?' -> '$n' rewrite assumes every '?' is a placeholder. A literal '?' added
